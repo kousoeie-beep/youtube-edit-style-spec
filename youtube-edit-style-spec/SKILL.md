@@ -46,7 +46,7 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 | 手順の正本 | [verify/PROTOCOL.md](verify/PROTOCOL.md) | 「yamlだけを読んで作り直す」検証の手順・判定基準・報告の書き方 |
 | 計測 | [verify/measure.py](verify/measure.py) | 合成後の実座標。**箱基準とインク基準を分けて出す**（混同が実害を生んだ） |
 | 報告の型 | [verify/REPORT_TEMPLATE.md](verify/REPORT_TEMPLATE.md) | 節ごと追記式。途中で落ちても実測が残る |
-| 静的検査 | [styles/lint.py](styles/lint.py) | 24検査。**周回を閉じる前に違反0を確認する** |
+| 静的検査 | [styles/lint.py](styles/lint.py) | 26項目（違反ゲート11＋申し送り15）。**周回を閉じる前に違反0を確認する** |
 
 **実装（レンダラ）は正本化しない。** 毎周ゼロから書き捨てるのがこの検証の本体で、
 共通レンダラを渡すと再実装が消えて何も測らなくなる。

@@ -136,5 +136,5 @@ R9で最も重い欠陥は私が作った。ai_biz_pitch の `base_caption` を�
 ### 使う前に必ず
 
 ```bash
-uv run --with pyyaml --offline python3 .claude/skills/youtube-edit-style-spec/styles/lint.py
+uv run --with pyyaml --offline python3 styles/lint.py
 ```

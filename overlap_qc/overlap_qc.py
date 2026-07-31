@@ -366,8 +366,13 @@ def pixel_collision_ratio(a: Element, b: Element, inter_rect) -> Optional[float]
             # None＝「全域不透明」として扱う（見逃しより過検出を選ぶ保守的な近似）。
             return None
         im = _load_alpha_array(el.file)
-        # el の矩形内でのローカル座標に変換
-        lx0, ly0 = ix0 - el.x, iy0 - el.y
+        # Element.x/y は透明余白を除いた実描画bboxの画面座標だが、im は元PNG全体。
+        # bboxの元画像内オフセットを戻さないと、透明余白があるPNGで別領域を切り出してしまう。
+        alpha_rect = get_alpha_rect(el.file)
+        if alpha_rect is None:
+            return np.zeros((h, w), dtype=im.dtype)
+        bx0, by0, _bw, _bh = alpha_rect
+        lx0, ly0 = bx0 + ix0 - el.x, by0 + iy0 - el.y
         lx1, ly1 = lx0 + w, ly0 + h
         return im[ly0:ly1, lx0:lx1]
 
@@ -391,6 +396,15 @@ def pixel_collision_ratio(a: Element, b: Element, inter_rect) -> Optional[float]
 
 
 _ALPHA_ARRAY_CACHE: dict[str, "np.ndarray"] = {}
+
+
+def canvas_coverage(el: Element, canvas_w: int = 1920, canvas_h: int = 1080) -> float:
+    """要素矩形のうち、実際にキャンバス内を覆う面積の比率を返す。"""
+    ix0, iy0 = max(0, el.x), max(0, el.y)
+    ix1, iy1 = min(canvas_w, el.x + el.w), min(canvas_h, el.y + el.h)
+    inside_w = max(0, ix1 - ix0)
+    inside_h = max(0, iy1 - iy0)
+    return (inside_w * inside_h) / float(canvas_w * canvas_h)
 
 
 # 【2026-07-26 追加】3つ目の盲点への対処。
@@ -571,7 +585,7 @@ def run(cfg_path: str, out_json: Optional[str] = None):
         st = re.sub(r"_\d+$", "", os.path.splitext(os.path.basename(el.element_id))[0])
         if st not in opaque_names:
             continue
-        cover = (el.w * el.h) / float(CANVAS_W * CANVAS_H)
+        cover = canvas_coverage(el, CANVAS_W, CANVAS_H)
         if cover < COVER_MIN:
             rejected_opaque.append({"element": el.element_id, "coverage": round(cover, 4),
                                     "rect": [el.x, el.y, el.x + el.w, el.y + el.h]})
