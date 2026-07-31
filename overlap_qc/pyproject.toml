@@ -1,0 +1,11 @@
+[project]
+name = "overlap-qc"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "fugashi>=1.5.2",
+    "numpy>=2.4.6",
+    "pillow>=12.3.0",
+    "unidic-lite>=1.0.8",
+]

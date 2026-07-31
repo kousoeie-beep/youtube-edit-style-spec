@@ -1,0 +1,1977 @@
+{
+  "version": "v0",
+  "updated": "2026-07-27",
+  "source_dir": "~/Library/Fonts/",
+  "total_files_scanned": 191,
+  "total_families": 111,
+  "generation_method": "uv run --with fonttools でfontTools name テーブル(nameID 0,1,2,4,6,8,9,13,14,16,17)を実測。ライセンスはnameID13(License Description)/14(License URL)の文字列パターン一致のみで判定し、一致しない場合はspdx=null(不明)のまま記録。推測補完は行っていない。",
+  "fonts": [
+    {
+      "id": "alfa-slab-one",
+      "family": "Alfa Slab One",
+      "files": {
+        "regular": "~/Library/Fonts/AlfaSlabOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: JM Sole"
+    },
+    {
+      "id": "amatic-sc",
+      "family": "Amatic SC",
+      "files": {
+        "bold": "~/Library/Fonts/AmaticSC-Bold.ttf",
+        "regular": "~/Library/Fonts/AmaticSC-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Multiple Designers"
+    },
+    {
+      "id": "anton",
+      "family": "Anton",
+      "files": {
+        "regular": "~/Library/Fonts/Anton-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Vernon Adams"
+    },
+    {
+      "id": "aoboshi-one",
+      "family": "Aoboshi One",
+      "files": {
+        "regular": "~/Library/Fonts/AoboshiOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: IKIMOJI"
+    },
+    {
+      "id": "archivo-black",
+      "family": "Archivo Black",
+      "files": {
+        "regular": "~/Library/Fonts/ArchivoBlack-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Hector Gatti"
+    },
+    {
+      "id": "audiowide",
+      "family": "Audiowide",
+      "files": {
+        "regular": "~/Library/Fonts/Audiowide-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Astigmatic (AOETI)"
+    },
+    {
+      "id": "bizudp-gothic",
+      "family": "BIZ UDPGothic",
+      "files": {
+        "bold": "~/Library/Fonts/BIZUDPGothic-Bold.ttf",
+        "regular": "~/Library/Fonts/BIZUDPGothic-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: TypeBank Co., Ltd."
+    },
+    {
+      "id": "bizudp-mincho",
+      "family": "BIZ UDPMincho",
+      "files": {
+        "bold": "~/Library/Fonts/BIZUDPMincho-Bold.ttf",
+        "regular": "~/Library/Fonts/BIZUDPMincho-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: TypeBank Co., Ltd."
+    },
+    {
+      "id": "bagel-fat-one",
+      "family": "Bagel Fat One",
+      "files": {
+        "regular": "~/Library/Fonts/BagelFatOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Kyung-won Kim"
+    },
+    {
+      "id": "baloo-2",
+      "family": "Baloo 2",
+      "files": {
+        "variable": "~/Library/Fonts/Baloo2[wght].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Sarang Kulkarni and Ek Type"
+    },
+    {
+      "id": "bebas-neue",
+      "family": "Bebas Neue",
+      "files": {
+        "regular": "~/Library/Fonts/BebasNeue-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Ryoichi Tsunekawa"
+    },
+    {
+      "id": "big-shoulders-stencil",
+      "family": "Big Shoulders Stencil",
+      "files": {
+        "variable": "~/Library/Fonts/BigShouldersStencil[opsz,wght].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: Patric King"
+    },
+    {
+      "id": "black-ops-one",
+      "family": "Black Ops One",
+      "files": {
+        "regular": "~/Library/Fonts/BlackOpsOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: James Grieshaber, Eben Sorkin"
+    },
+    {
+      "id": "boogaloo",
+      "family": "Boogaloo",
+      "files": {
+        "regular": "~/Library/Fonts/Boogaloo-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: John Vargas Beltran"
+    },
+    {
+      "id": "bungee",
+      "family": "Bungee",
+      "files": {
+        "regular": "~/Library/Fonts/Bungee-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: David Jonathan Ross"
+    },
+    {
+      "id": "bungee-inline",
+      "family": "Bungee Inline",
+      "files": {
+        "regular": "~/Library/Fonts/BungeeInline-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: David Jonathan Ross"
+    },
+    {
+      "id": "bungee-shade",
+      "family": "Bungee Shade",
+      "files": {
+        "regular": "~/Library/Fonts/BungeeShade-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: David Jonathan Ross"
+    },
+    {
+      "id": "caveat",
+      "family": "Caveat",
+      "files": {
+        "variable": "~/Library/Fonts/Caveat[wght].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Pablo Impallari"
+    },
+    {
+      "id": "cherry-bomb-one",
+      "family": "Cherry Bomb One",
+      "files": {
+        "regular": "~/Library/Fonts/CherryBombOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: satsuyako"
+    },
+    {
+      "id": "chokokutai",
+      "family": "Chokokutai",
+      "files": {
+        "regular": "~/Library/Fonts/Chokokutai-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: 108号,108go"
+    },
+    {
+      "id": "creepster",
+      "family": "Creepster",
+      "files": {
+        "regular": "~/Library/Fonts/Creepster-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Font Diner, Inc"
+    },
+    {
+      "id": "darumadrop-one",
+      "family": "Darumadrop One",
+      "files": {
+        "regular": "~/Library/Fonts/DarumadropOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Maniackers Design"
+    },
+    {
+      "id": "dela-gothic-one",
+      "family": "Dela Gothic One",
+      "files": {
+        "regular": "~/Library/Fonts/DelaGothicOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: artakana"
+    },
+    {
+      "id": "dot-gothic-16",
+      "family": "DotGothic16",
+      "files": {
+        "regular": "~/Library/Fonts/DotGothic16-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "electrolize",
+      "family": "Electrolize",
+      "files": {
+        "regular": "~/Library/Fonts/Electrolize-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Valery Zaveryaev"
+    },
+    {
+      "id": "fascinate",
+      "family": "Fascinate",
+      "files": {
+        "regular": "~/Library/Fonts/Fascinate-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Astigmatic (AOETI)"
+    },
+    {
+      "id": "fascinate-inline",
+      "family": "Fascinate Inline",
+      "files": {
+        "regular": "~/Library/Fonts/FascinateInline-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Astigmatic (AOETI)"
+    },
+    {
+      "id": "fjalla-one",
+      "family": "Fjalla One",
+      "files": {
+        "regular": "~/Library/Fonts/FjallaOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Irina Smirnova, Eben Sorkin"
+    },
+    {
+      "id": "fredoka",
+      "family": "Fredoka",
+      "files": {
+        "variable": "~/Library/Fonts/Fredoka[wdth,wght].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Ben Nathan"
+    },
+    {
+      "id": "hachi-maru-pop",
+      "family": "Hachi Maru Pop",
+      "files": {
+        "regular": "~/Library/Fonts/HachiMaruPop-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Nontynet"
+    },
+    {
+      "id": "hina-mincho",
+      "family": "Hina Mincho",
+      "files": {
+        "regular": "~/Library/Fonts/HinaMincho-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: satsuyako"
+    },
+    {
+      "id": "ibm-plex-sans-jp",
+      "family": "IBM Plex Sans JP",
+      "files": {
+        "bold": "~/Library/Fonts/IBMPlexSansJP-Bold.ttf",
+        "extralight": "~/Library/Fonts/IBMPlexSansJP-ExtraLight.ttf",
+        "light": "~/Library/Fonts/IBMPlexSansJP-Light.ttf",
+        "medium": "~/Library/Fonts/IBMPlexSansJP-Medium.ttf",
+        "regular": "~/Library/Fonts/IBMPlexSansJP-Regular.ttf",
+        "semibold": "~/Library/Fonts/IBMPlexSansJP-SemiBold.ttf",
+        "thin": "~/Library/Fonts/IBMPlexSansJP-Thin.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Mike Abbink; Paul van der Laan; Pieter van Rosmalen; Wujin Sim; Yejin Wi; Jinhee Kim; Boomi Park; Yona Kim; Kichan Ma"
+    },
+    {
+      "id": "kaisei-decol",
+      "family": "Kaisei Decol",
+      "files": {
+        "bold": "~/Library/Fonts/KaiseiDecol-Bold.ttf",
+        "medium": "~/Library/Fonts/KaiseiDecol-Medium.ttf",
+        "regular": "~/Library/Fonts/KaiseiDecol-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Font-Kai, 金井和夫"
+    },
+    {
+      "id": "kaisei-haruno-umi",
+      "family": "Kaisei HarunoUmi",
+      "files": {
+        "bold": "~/Library/Fonts/KaiseiHarunoUmi-Bold.ttf",
+        "medium": "~/Library/Fonts/KaiseiHarunoUmi-Medium.ttf",
+        "regular": "~/Library/Fonts/KaiseiHarunoUmi-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Font-Kai, 金井和夫"
+    },
+    {
+      "id": "kaisei-opti",
+      "family": "Kaisei Opti",
+      "files": {
+        "bold": "~/Library/Fonts/KaiseiOpti-Bold.ttf",
+        "medium": "~/Library/Fonts/KaiseiOpti-Medium.ttf",
+        "regular": "~/Library/Fonts/KaiseiOpti-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Font-Kai, 金井和夫"
+    },
+    {
+      "id": "kaisei-tokumin",
+      "family": "Kaisei Tokumin",
+      "files": {
+        "bold": "~/Library/Fonts/KaiseiTokumin-Bold.ttf",
+        "extrabold": "~/Library/Fonts/KaiseiTokumin-ExtraBold.ttf",
+        "medium": "~/Library/Fonts/KaiseiTokumin-Medium.ttf",
+        "regular": "~/Library/Fonts/KaiseiTokumin-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Font-Kai, 金井和夫"
+    },
+    {
+      "id": "kalam",
+      "family": "Kalam",
+      "files": {
+        "bold": "~/Library/Fonts/Kalam-Bold.ttf",
+        "light": "~/Library/Fonts/Kalam-Light.ttf",
+        "regular": "~/Library/Fonts/Kalam-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Lipi Raval (Devanagari and Latin), Jonny Pinhorn (Latin)"
+    },
+    {
+      "id": "kiwi-maru",
+      "family": "Kiwi Maru",
+      "files": {
+        "light": "~/Library/Fonts/KiwiMaru-Light.ttf",
+        "medium": "~/Library/Fonts/KiwiMaru-Medium.ttf",
+        "regular": "~/Library/Fonts/KiwiMaru-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Hiroki-Chan"
+    },
+    {
+      "id": "klee-one",
+      "family": "Klee One",
+      "files": {
+        "regular": "~/Library/Fonts/KleeOne-Regular.ttf",
+        "semibold": "~/Library/Fonts/KleeOne-SemiBold.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "kosugi",
+      "family": "Kosugi",
+      "files": {
+        "regular": "~/Library/Fonts/Kosugi-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "Apache-2.0",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "notes": "デザイナー表記: MOTOYA"
+    },
+    {
+      "id": "kosugi-maru",
+      "family": "Kosugi Maru",
+      "files": {
+        "regular": "~/Library/Fonts/KosugiMaru-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "Apache-2.0",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "notes": "デザイナー表記: MOTOYA"
+    },
+    {
+      "id": "line-seed-jp",
+      "family": "LINE Seed JP",
+      "files": {
+        "bold": "~/Library/Fonts/LINESeedJP-Bold.ttf",
+        "extrabold": "~/Library/Fonts/LINESeedJP-ExtraBold.ttf",
+        "regular": "~/Library/Fonts/LINESeedJP-Regular.ttf",
+        "thin": "~/Library/Fonts/LINESeedJP-Thin.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: LY Corporation & Fontrix & Fontworks"
+    },
+    {
+      "id": "lacquer",
+      "family": "Lacquer",
+      "files": {
+        "regular": "~/Library/Fonts/Lacquer-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Eli Block, Niki Polyocan"
+    },
+    {
+      "id": "lilita-one",
+      "family": "Lilita One",
+      "files": {
+        "regular": "~/Library/Fonts/LilitaOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Juan Montoreano"
+    },
+    {
+      "id": "lobster",
+      "family": "Lobster",
+      "files": {
+        "regular": "~/Library/Fonts/Lobster-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Impallari Type"
+    },
+    {
+      "id": "mplus-1",
+      "family": "MPLUS1",
+      "files": {
+        "bold": "~/Library/Fonts/MPLUS1-Bold.ttf",
+        "light": "~/Library/Fonts/MPLUS1-Light.ttf",
+        "regular": "~/Library/Fonts/MPLUS1-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: Coji Morishita"
+    },
+    {
+      "id": "mplus-1-code",
+      "family": "MPLUS1Code",
+      "files": {
+        "bold": "~/Library/Fonts/MPLUS1Code-Bold.ttf",
+        "regular": "~/Library/Fonts/MPLUS1Code-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: Coji Morishita"
+    },
+    {
+      "id": "mplus-1p",
+      "family": "M PLUS 1p",
+      "files": {
+        "black": "~/Library/Fonts/MPLUS1p-Black.ttf",
+        "bold": "~/Library/Fonts/MPLUS1p-Bold.ttf",
+        "extrabold": "~/Library/Fonts/MPLUS1p-ExtraBold.ttf",
+        "light": "~/Library/Fonts/MPLUS1p-Light.ttf",
+        "medium": "~/Library/Fonts/MPLUS1p-Medium.ttf",
+        "regular": "~/Library/Fonts/MPLUS1p-Regular.ttf",
+        "thin": "~/Library/Fonts/MPLUS1p-Thin.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": ""
+    },
+    {
+      "id": "mplus-2",
+      "family": "MPLUS2",
+      "files": {
+        "bold": "~/Library/Fonts/MPLUS2-Bold.ttf",
+        "light": "~/Library/Fonts/MPLUS2-Light.ttf",
+        "regular": "~/Library/Fonts/MPLUS2-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: Coji Morishita"
+    },
+    {
+      "id": "mplus-rounded-1c",
+      "family": "Rounded Mplus 1c",
+      "files": {
+        "black": "~/Library/Fonts/MPLUSRounded1c-Black.ttf",
+        "bold": "~/Library/Fonts/MPLUSRounded1c-Bold.ttf",
+        "extrabold": "~/Library/Fonts/MPLUSRounded1c-ExtraBold.ttf",
+        "light": "~/Library/Fonts/MPLUSRounded1c-Light.ttf",
+        "medium": "~/Library/Fonts/MPLUSRounded1c-Medium.ttf",
+        "regular": "~/Library/Fonts/MPLUSRounded1c-Regular.ttf",
+        "thin": "~/Library/Fonts/MPLUSRounded1c-Thin.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": ""
+    },
+    {
+      "id": "mplusu",
+      "family": "MPLUSU",
+      "files": {
+        "bold": "~/Library/Fonts/MPLUSU-Bold.ttf",
+        "light": "~/Library/Fonts/MPLUSU-Light.ttf",
+        "regular": "~/Library/Fonts/MPLUSU-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: Coji Morishita"
+    },
+    {
+      "id": "metal-mania",
+      "family": "Metal Mania",
+      "files": {
+        "regular": "~/Library/Fonts/MetalMania-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Dathan Boardman"
+    },
+    {
+      "id": "mochiy-pop-one",
+      "family": "Mochiy Pop One",
+      "files": {
+        "regular": "~/Library/Fonts/MochiyPopOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: FONTDASU"
+    },
+    {
+      "id": "mochiy-pop-p-one",
+      "family": "Mochiy Pop P One",
+      "files": {
+        "regular": "~/Library/Fonts/MochiyPopPOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: FONTDASU"
+    },
+    {
+      "id": "modak",
+      "family": "Modak",
+      "files": {
+        "regular": "~/Library/Fonts/Modak-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Sarang Kulkarni, Maithili Shingre, Noopur Datye"
+    },
+    {
+      "id": "monomaniac-one",
+      "family": "Monomaniac One",
+      "files": {
+        "regular": "~/Library/Fonts/MonomaniacOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Maniackers Design"
+    },
+    {
+      "id": "monoton",
+      "family": "Monoton",
+      "files": {
+        "regular": "~/Library/Fonts/Monoton-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": null,
+        "source": "不明（font name table に License(13)/License URL(14) レコードなし。fc-query でも同様）",
+        "commercial_ok": null,
+        "ai_training_ok": "unknown",
+        "raw_text": []
+      },
+      "notes": "ライセンス不明。業務利用しない（README参照）"
+    },
+    {
+      "id": "murecho",
+      "family": "Murecho",
+      "files": {
+        "bold": "~/Library/Fonts/Murecho-Bold.ttf",
+        "light": "~/Library/Fonts/Murecho-Light.ttf",
+        "regular": "~/Library/Fonts/Murecho-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Neil Summerour"
+    },
+    {
+      "id": "nabla",
+      "family": "Nabla",
+      "files": {
+        "variable": "~/Library/Fonts/Nabla[EDPT,EHLT].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Arthur Reinders Folmer"
+    },
+    {
+      "id": "new-tegomin",
+      "family": "New Tegomin",
+      "files": {
+        "regular": "~/Library/Fonts/NewTegomin-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Kyosuke Nagai"
+    },
+    {
+      "id": "nosifer",
+      "family": "Nosifer",
+      "files": {
+        "regular": "~/Library/Fonts/Nosifer-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": ""
+    },
+    {
+      "id": "noto-sans-jp",
+      "family": "Noto Sans JP",
+      "files": {
+        "bold": "~/Library/Fonts/NotoSansJP-Bold.ttf",
+        "regular": "~/Library/Fonts/NotoSansJP-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Ryoko NISHIZUKA 西塚涼子 (kana, bopomofo & ideographs); Paul D. Hunt (Latin, Greek & Cyrillic); Sandoll Communications 산돌커뮤니케이션, Soo-young JANG 장수영 & Joo-yeon KANG 강주연 (hangul elements, letters & syllables)"
+    },
+    {
+      "id": "noto-serif-jp",
+      "family": "Noto Serif JP",
+      "files": {
+        "bold": "~/Library/Fonts/NotoSerifJP-Bold.ttf",
+        "regular": "~/Library/Fonts/NotoSerifJP-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: Ryoko NISHIZUKA 西塚涼子 (kana & ideographs); Frank Grießhammer (Latin, Greek & Cyrillic); Wenlong ZHANG 张文龙 (bopomofo); Sandoll Communications 산돌커뮤니케이션, Soohyun PARK 박수현, Yejin WE 위예진 & Donghoon HAN 한동훈 (hangul elements, letters & syllables)"
+    },
+    {
+      "id": "orbitron",
+      "family": "Orbitron",
+      "files": {
+        "variable": "~/Library/Fonts/Orbitron[wght].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Matt McInerney"
+    },
+    {
+      "id": "oswald",
+      "family": "Oswald",
+      "files": {
+        "variable": "~/Library/Fonts/Oswald[wght].ttf"
+      },
+      "japanese": false,
+      "variable": true,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Vernon Adams"
+    },
+    {
+      "id": "otomanopee-one",
+      "family": "Otomanopee One",
+      "files": {
+        "regular": "~/Library/Fonts/OtomanopeeOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Das Ende der Wildnis"
+    },
+    {
+      "id": "pacifico",
+      "family": "Pacifico",
+      "files": {
+        "regular": "~/Library/Fonts/Pacifico-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Vernon Adams"
+    },
+    {
+      "id": "palette-mosaic",
+      "family": "Palette Mosaic",
+      "files": {
+        "regular": "~/Library/Fonts/PaletteMosaic-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Shibuyafont"
+    },
+    {
+      "id": "passion-one",
+      "family": "Passion One",
+      "files": {
+        "black": "~/Library/Fonts/PassionOne-Black.ttf",
+        "bold": "~/Library/Fonts/PassionOne-Bold.ttf",
+        "regular": "~/Library/Fonts/PassionOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Alejandro Lo Celso"
+    },
+    {
+      "id": "patrick-hand",
+      "family": "Patrick Hand",
+      "files": {
+        "regular": "~/Library/Fonts/PatrickHand-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Patrick Wagesreiter"
+    },
+    {
+      "id": "permanent-marker",
+      "family": "Permanent Marker",
+      "files": {
+        "regular": "~/Library/Fonts/PermanentMarker-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "Apache-2.0",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "notes": "デザイナー表記: Font Diner, Inc"
+    },
+    {
+      "id": "potta-one",
+      "family": "Potta One",
+      "files": {
+        "regular": "~/Library/Fonts/PottaOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: 108号,108go"
+    },
+    {
+      "id": "press-start-2-p",
+      "family": "Press Start 2P",
+      "files": {
+        "regular": "~/Library/Fonts/PressStart2P-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: CodeMan38"
+    },
+    {
+      "id": "rampart-one",
+      "family": "Rampart One",
+      "files": {
+        "regular": "~/Library/Fonts/RampartOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "reggae-one",
+      "family": "Reggae One",
+      "files": {
+        "regular": "~/Library/Fonts/ReggaeOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "righteous",
+      "family": "Righteous",
+      "files": {
+        "regular": "~/Library/Fonts/Righteous-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Astigmatic (AOETI)"
+    },
+    {
+      "id": "rock-3-d",
+      "family": "Rock 3D",
+      "files": {
+        "regular": "~/Library/Fonts/Rock3D-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Shibuyafont"
+    },
+    {
+      "id": "rock-salt",
+      "family": "Rock Salt",
+      "files": {
+        "regular": "~/Library/Fonts/RockSalt-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "Apache-2.0",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "notes": "デザイナー表記: Squid"
+    },
+    {
+      "id": "rockn-roll-one",
+      "family": "RocknRoll One",
+      "files": {
+        "regular": "~/Library/Fonts/RocknRollOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "russo-one",
+      "family": "Russo One",
+      "files": {
+        "regular": "~/Library/Fonts/RussoOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Jovanny lemonad"
+    },
+    {
+      "id": "sancreek",
+      "family": "Sancreek",
+      "files": {
+        "regular": "~/Library/Fonts/Sancreek-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Vernon Adams"
+    },
+    {
+      "id": "sawarabi-gothic",
+      "family": "Sawarabi Gothic",
+      "files": {
+        "regular": "~/Library/Fonts/SawarabiGothic-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: mshio (mshio@users.sourceforge.jp)"
+    },
+    {
+      "id": "sawarabi-mincho",
+      "family": "Sawarabi Mincho",
+      "files": {
+        "regular": "~/Library/Fonts/SawarabiMincho-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": ""
+    },
+    {
+      "id": "shadows-into-light",
+      "family": "Shadows Into Light",
+      "files": {
+        "regular": "~/Library/Fonts/ShadowsIntoLight.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Kimberly Geswein"
+    },
+    {
+      "id": "shippori-antique",
+      "family": "Shippori Antique",
+      "files": {
+        "regular": "~/Library/Fonts/ShipporiAntique-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: FONTDASU"
+    },
+    {
+      "id": "shippori-antique-b-1",
+      "family": "Shippori Antique B1",
+      "files": {
+        "regular": "~/Library/Fonts/ShipporiAntiqueB1-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: FONTDASU"
+    },
+    {
+      "id": "shippori-mincho",
+      "family": "Shippori Mincho",
+      "files": {
+        "bold": "~/Library/Fonts/ShipporiMincho-Bold.ttf",
+        "extrabold": "~/Library/Fonts/ShipporiMincho-ExtraBold.ttf",
+        "medium": "~/Library/Fonts/ShipporiMincho-Medium.ttf",
+        "regular": "~/Library/Fonts/ShipporiMincho-Regular.ttf",
+        "semibold": "~/Library/Fonts/ShipporiMincho-SemiBold.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: FONTDASU"
+    },
+    {
+      "id": "shippori-mincho-b-1",
+      "family": "Shippori Mincho B1",
+      "files": {
+        "bold": "~/Library/Fonts/ShipporiMinchoB1-Bold.ttf",
+        "extrabold": "~/Library/Fonts/ShipporiMinchoB1-ExtraBold.ttf",
+        "medium": "~/Library/Fonts/ShipporiMinchoB1-Medium.ttf",
+        "regular": "~/Library/Fonts/ShipporiMinchoB1-Regular.ttf",
+        "semibold": "~/Library/Fonts/ShipporiMinchoB1-SemiBold.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: FONTDASU"
+    },
+    {
+      "id": "shizuru",
+      "family": "Shizuru",
+      "files": {
+        "regular": "~/Library/Fonts/Shizuru-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Shibuyafont"
+    },
+    {
+      "id": "slackside-one",
+      "family": "Slackside One",
+      "files": {
+        "regular": "~/Library/Fonts/SlacksideOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Maniackers Design"
+    },
+    {
+      "id": "special-elite",
+      "family": "Special Elite",
+      "files": {
+        "regular": "~/Library/Fonts/SpecialElite-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "Apache-2.0",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "notes": "デザイナー表記: Astigmatic (AOETI)"
+    },
+    {
+      "id": "staatliches",
+      "family": "Staatliches",
+      "files": {
+        "regular": "~/Library/Fonts/Staatliches-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Brian LaRossa & Erica Carras"
+    },
+    {
+      "id": "stardos-stencil",
+      "family": "Stardos Stencil",
+      "files": {
+        "bold": "~/Library/Fonts/StardosStencil-Bold.ttf",
+        "regular": "~/Library/Fonts/StardosStencil-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": ""
+    },
+    {
+      "id": "stick",
+      "family": "Stick",
+      "files": {
+        "regular": "~/Library/Fonts/Stick-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "titan-one",
+      "family": "Titan One",
+      "files": {
+        "regular": "~/Library/Fonts/TitanOne-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Rodrigo Fuenzalida"
+    },
+    {
+      "id": "train-one",
+      "family": "Train One",
+      "files": {
+        "regular": "~/Library/Fonts/TrainOne-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Fontworks Inc."
+    },
+    {
+      "id": "tsukimi-rounded",
+      "family": "Tsukimi Rounded",
+      "files": {
+        "bold": "~/Library/Fonts/TsukimiRounded-Bold.ttf",
+        "light": "~/Library/Fonts/TsukimiRounded-Light.ttf",
+        "medium": "~/Library/Fonts/TsukimiRounded-Medium.ttf",
+        "regular": "~/Library/Fonts/TsukimiRounded-Regular.ttf",
+        "semibold": "~/Library/Fonts/TsukimiRounded-SemiBold.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Takashi Funayama"
+    },
+    {
+      "id": "vt-323",
+      "family": "VT323",
+      "files": {
+        "regular": "~/Library/Fonts/VT323-Regular.ttf"
+      },
+      "japanese": false,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "http://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Peter Hull"
+    },
+    {
+      "id": "wdxl-lubrifont-jpn",
+      "family": "WDXL 滑油字 JP N",
+      "files": {
+        "regular": "~/Library/Fonts/WDXLLubrifontJPN-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://openfontlicense.org"
+      },
+      "notes": "デザイナー表記: 【WDXL 滑油字】版權 2020-2022 (c) 夜煞之樂2001、ZERO子；【站酷慶科黃油體】版權 2018-2022 (c) 站酷慶科黃油體計劃作者"
+    },
+    {
+      "id": "yomogi",
+      "family": "Yomogi",
+      "files": {
+        "regular": "~/Library/Fonts/Yomogi-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: satsuyako"
+    },
+    {
+      "id": "yuji-boku",
+      "family": "Yuji Boku",
+      "files": {
+        "regular": "~/Library/Fonts/YujiBoku-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Kataoka Yuji"
+    },
+    {
+      "id": "yuji-mai",
+      "family": "Yuji Mai",
+      "files": {
+        "regular": "~/Library/Fonts/YujiMai-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Kataoka Yuji"
+    },
+    {
+      "id": "yuji-syuku",
+      "family": "Yuji Syuku",
+      "files": {
+        "regular": "~/Library/Fonts/YujiSyuku-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Kataoka Yuji"
+    },
+    {
+      "id": "yusei-magic",
+      "family": "Yusei Magic",
+      "files": {
+        "regular": "~/Library/Fonts/YuseiMagic-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Tanukizamurai"
+    },
+    {
+      "id": "zen-antique",
+      "family": "Zen Antique",
+      "files": {
+        "regular": "~/Library/Fonts/ZenAntique-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    },
+    {
+      "id": "zen-antique-soft",
+      "family": "Zen Antique Soft",
+      "files": {
+        "regular": "~/Library/Fonts/ZenAntiqueSoft-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    },
+    {
+      "id": "zen-kaku-gothic-antique",
+      "family": "Zen Kaku Gothic Antique",
+      "files": {
+        "black": "~/Library/Fonts/ZenKakuGothicAntique-Black.ttf",
+        "bold": "~/Library/Fonts/ZenKakuGothicAntique-Bold.ttf",
+        "light": "~/Library/Fonts/ZenKakuGothicAntique-Light.ttf",
+        "medium": "~/Library/Fonts/ZenKakuGothicAntique-Medium.ttf",
+        "regular": "~/Library/Fonts/ZenKakuGothicAntique-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    },
+    {
+      "id": "zen-kaku-gothic-new",
+      "family": "Zen Kaku Gothic New",
+      "files": {
+        "black": "~/Library/Fonts/ZenKakuGothicNew-Black.ttf",
+        "bold": "~/Library/Fonts/ZenKakuGothicNew-Bold.ttf",
+        "light": "~/Library/Fonts/ZenKakuGothicNew-Light.ttf",
+        "medium": "~/Library/Fonts/ZenKakuGothicNew-Medium.ttf",
+        "regular": "~/Library/Fonts/ZenKakuGothicNew-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    },
+    {
+      "id": "zen-kurenaido",
+      "family": "Zen Kurenaido",
+      "files": {
+        "regular": "~/Library/Fonts/ZenKurenaido-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    },
+    {
+      "id": "zen-maru-gothic",
+      "family": "Zen Maru Gothic",
+      "files": {
+        "black": "~/Library/Fonts/ZenMaruGothic-Black.ttf",
+        "bold": "~/Library/Fonts/ZenMaruGothic-Bold.ttf",
+        "light": "~/Library/Fonts/ZenMaruGothic-Light.ttf",
+        "medium": "~/Library/Fonts/ZenMaruGothic-Medium.ttf",
+        "regular": "~/Library/Fonts/ZenMaruGothic-Regular.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    },
+    {
+      "id": "zen-old-mincho",
+      "family": "Zen Old Mincho",
+      "files": {
+        "black": "~/Library/Fonts/ZenOldMincho-Black.ttf",
+        "bold": "~/Library/Fonts/ZenOldMincho-Bold.ttf",
+        "medium": "~/Library/Fonts/ZenOldMincho-Medium.ttf",
+        "regular": "~/Library/Fonts/ZenOldMincho-Regular.ttf",
+        "semibold": "~/Library/Fonts/ZenOldMincho-SemiBold.ttf"
+      },
+      "japanese": true,
+      "variable": false,
+      "license": {
+        "spdx": "OFL-1.1",
+        "source": "font name table (nameID 13/14, fontTools実測)",
+        "commercial_ok": true,
+        "ai_training_ok": "unknown",
+        "license_url": "https://scripts.sil.org/OFL"
+      },
+      "notes": "デザイナー表記: Yoshimichi Ohira"
+    }
+  ]
+}
