@@ -36,7 +36,6 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 
 | 領域 | leaf | 扱う内容 |
 |---|---|---|
-| APIキー | [api-keys.md](api-keys.md) | `.env` の読み込み・非出力規律、キー種別ごとの解禁条件、APIパス実証で確定した制約 |
 | 実行環境 | [environment-notes.md](environment-notes.md) | このMac固有のffmpeg/Pillow制約、強調テロップ視認性の確定数値、被りQC・被り予防の設計規則 |
 | 納品運用 | [delivery-ops.md](delivery-ops.md) | nice値降格・scratchpad揮発性・作業ディレクトリ・納品先、品質実績（参考基準）、**このスキル自体を並列編集する際の注意** |
 
@@ -69,7 +68,7 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 
 ## 最重要ハードルール（詳細は各leaf）
 
-- **APIキーの値をログ・レポート・チャットに出力しない**（[api-keys.md](api-keys.md)）
+- **APIキーの値をログ・レポート・チャットに出力しない**（運用規律は公開版に含めない）
 - **QCゲート通過後も必ずフレームを目視すること。ツールの緑信号は目視の代替にならない**（[qc-gates.md](qc-gates.md)）
 - **推測で字幕を作らない**。全パス不一致＋低確信語は省略し記録する（[captions-quality-v2.md](captions-quality-v2.md)）
 - **scratchpadは数時間で消える**。作業ディレクトリは `~/Documents/編集作業/<案件名>/` に置く（[delivery-ops.md](delivery-ops.md)）

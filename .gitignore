@@ -4,3 +4,6 @@ __pycache__/
 work/
 frames/
 dist/
+
+# 公開版から除外（内部のキー運用規律のため。チューニングの周回には不要）
+api-keys.md
