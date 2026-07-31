@@ -487,6 +487,7 @@ telop_layers:
       # 実際 lint の矩形交差検査（R8で新設）が person_nameplate × bilingual_nameplate を
       # 678x159px（62%）、person_nameplate × sidebar を 900x194px（100%）で検出した。
       # 排他ではなく**変種スコープ**で解くのが正しい（2本は別の番組）
+    text_content: none   # 日本語ラベル付きCG図解は素材側へ焼き込む
     position: {centerX: 0.5, centerY: 0.5}
     persistent: false
     style: カード

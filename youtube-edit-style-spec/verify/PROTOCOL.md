@@ -51,7 +51,7 @@ uv run --with pillow --with numpy python3 ../overlap_qc/overlap_qc.py \
   --config configs/<name>.json --out-json work/<name>/overlap_qc_result.json
 ```
 - 終了コード: `0`=PASS / `1`=FAIL / `2`=NOT_INSPECTED または PARTIAL
-- **`element_count` が生成レイヤー数と一致しなければ、QC は信用しない**
+- **`element_count` が、生成レイヤー数から `layer_kind: video` および明示的な検査除外レイヤーを差し引いた「検査可能レイヤー数」と一致しなければ、QC は信用しない**
 - `layer_kind: video` の role は検査対象外。**目視が唯一の担保**
 
 ### (d) 実測

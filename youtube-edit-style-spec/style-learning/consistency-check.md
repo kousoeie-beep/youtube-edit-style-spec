@@ -25,7 +25,7 @@ grep -nE "未確認|未検証|未計測|類推|n=1|のみ|無いため|しか実
 ## 機械照合を先に流す（2026-07-27 追加）
 
 ```bash
-uv run --with pyyaml --offline python3 .claude/skills/youtube-edit-style-spec/styles/lint.py
+uv run --with pyyaml --offline python3 styles/lint.py
 ```
 
 `styles/lint.py` は**2026-07-27に実害を出した6つの型**を機械で見る。
