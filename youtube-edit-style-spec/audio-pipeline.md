@@ -1,7 +1,7 @@
 # 音声パイプラインの制約（LUFS/LRA/無音率）
 
 **このファイルは何を扱うか**: ラウドネス正規化（LUFS）とダイナミックレンジ（LRA）が同時に満たせないという実測結論、および「間を残す」設計スタイルで無音率が構造的に潰れる根本原因と正しい手順。
-**いつ読むか**: スタイルの音響目標（LUFS/LRA/無音率）を設計・検証する工程。音声強調・ASR側の手順は [captions-quality-v2.md](captions-quality-v2.md) を参照。True Peak実測やAPIパスの音声処理は [api-keys.md](api-keys.md) を参照。
+**いつ読むか**: スタイルの音響目標（LUFS/LRA/無音率）を設計・検証する工程。音声強調・ASR側の手順は [captions-quality-v2.md](captions-quality-v2.md) を参照。True Peak実測やAPIパスの音声処理は内部の運用文書を参照（公開版には含めない）。
 
 ## LUFSとLRAは同時に満たせない（2026-07-27に実測で確定・「2パスにすれば直る」は誤り）
 

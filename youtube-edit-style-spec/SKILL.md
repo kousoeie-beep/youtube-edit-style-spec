@@ -59,7 +59,7 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 
 1. [正本](#正本)の仕様書を読む
 2. 実行環境の制約を把握: [environment-notes.md](environment-notes.md)
-3. APIキーの有無を確認: [api-keys.md](api-keys.md)
+3. APIキーの有無を確認（値は絶対に出力しない。運用規律は公開版に含めない）
 4. 「〇〇風で」の指定があれば [style-learning/registry.md](style-learning/registry.md) で登録済みスタイルを確認し、無ければ [style-learning/index.md](style-learning/index.md) から学習フローに入る。**どのスタイルを使うか迷う場合は [styles/_index.md](styles/_index.md) の横断比較表**（cuts/LUFS/LRA/無音方針/テロップ密度の一覧。**無音率が選定の第一軸**）
 5. 字幕生成: [captions-quality-v2.md](captions-quality-v2.md)
 6. 音響設計: [audio-pipeline.md](audio-pipeline.md)
