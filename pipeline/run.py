@@ -272,9 +272,17 @@ def chunk(words, maxc=16, gap=0.8, chars=None):
     for m in morphs:
         if not cur: cur=[m]; continue
         p = cur[-1]["pos"]
-        if (m["pos"] in ATTACH or m["pos"]=="接頭辞"
+        # 【2026-08-01】接頭辞を「前にくっつける」と書いていたのが誤り。
+        #  接頭辞は**後ろ**に付く。「してないです。」に「今」が吸着し、そこから
+        #  「動画」まで連鎖して、2つの文が1つの字幕に入っていた。
+        #  句点のあとも必ず切る（文末は最強の改行位置）。
+        after_end = cur[-1]["t"] and cur[-1]["t"][-1] in "。！？!?"
+        if not after_end and (m["pos"] in ATTACH
             or (m["pos"]=="名詞" and p in ("名詞","接頭辞","接尾辞"))
-            or (m["pos"] in ("動詞","形容詞") and p in ("動詞","助詞"))):
+            or (m["pos"]=="動詞" and p in ("動詞","助詞")
+                and cur[-1]["t"].endswith(("って","て","で","と"))
+                and m["t"].startswith(("いう","いく","くる","みる","おく","しまう",
+                                       "ある","いる","もらう","くれる","あげる")))):
             cur.append(m)
         else: B.append(cur); cur=[m]
     if cur: B.append(cur)
@@ -318,6 +326,42 @@ def chunk(words, maxc=16, gap=0.8, chars=None):
     return caps
 
 # ── 5. 字幕連番PNG（回転後キャンバス・4辺検算つき）
+# 【2026-08-01】話者ごとにテロップの種類を分ける。判定の出どころは2つある。
+#  ①話者分離が信用できるとき: 疑問文を多く出した側を「聞き手」とし、
+#    **その話者の発話すべて**を question にする（＝本当の話者分離）
+#  ②信用できないとき: 発話ごとに疑問文かどうかで振る（＝話法の区別であって話者IDではない）
+#  どちらを使ったかは必ずログに出す。混ぜて「話者を分けた」と言わない。
+QMARK = ("?", "？")
+QTAIL = ("ですか", "ますか", "でしょうか", "ますかね", "ですかね",
+         "してほしいです", "教えてほしいです", "ください")
+
+def is_question(t):
+    t = t.rstrip("。、 ")
+    return t.endswith(QMARK) or t.endswith(QTAIL)
+
+def mark_kinds(caps, spk_ok):
+    if spk_ok:
+        cnt = {}
+        for c in caps:
+            k = c.get("speaker")
+            if k is None: continue
+            cnt.setdefault(k, [0, 0])
+            cnt[k][0] += is_question(c["text"]); cnt[k][1] += 1
+        if len(cnt) >= 2:
+            asker = max(cnt, key=lambda k: cnt[k][0] / max(1, cnt[k][1]))
+            for c in caps:
+                c["kind"] = "question" if c.get("speaker") == asker else "answer"
+            log(f"  テロップ種別: 話者分離ベース（聞き手={asker}, "
+                f"疑問文率 {cnt[asker][0]}/{cnt[asker][1]}）")
+            return caps
+    n = 0
+    for c in caps:
+        c["kind"] = "question" if is_question(c["text"]) else "answer"
+        n += c["kind"] == "question"
+    log(f"  テロップ種別: **話法ベース**（疑問文 {n}/{len(caps)}件）"
+        f"— 話者分離が信用できないため、話者IDではなく質問/回答で分けている")
+    return caps
+
 # 話者ごとのテロップ色。対談・インタビューでは実際に使われる区別方法で、
 # 位置を変えるより安全（位置を動かすと4辺検算とすきま検算がやり直しになる）。
 SPK_FILL = [(255,255,255,255), (255,224,138,255), (168,230,255,255)]
@@ -340,7 +384,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             import style_apply as SA
             st = SA.load_style(style_id, W, H)
-            plan = SA.render_plan(st, caps, W, H)
+            plan = SA.render_plan(st, caps, W, H, speaker_kinds=True)
             ev = len({p["event_index"] for p in plan})
             log(f"  スタイル {style_id} を適用: {ev}イベント / {len(plan)}行")
         except Exception as e:
@@ -385,11 +429,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
     ng=set(); M={}; span={}
     for ei, rows in sorted(ev.items()):
         im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
-        sp = speaker_of(rows[0]["start"]) if spk_ok else None
-        fill = SPK_FILL[0]
-        if sp is not None:
-            try: fill = SPK_FILL[int(str(sp).lstrip("ABCDEFspeaker_ ") or 0) % len(SPK_FILL)]
-            except Exception: fill = SPK_FILL[hash(str(sp)) % len(SPK_FILL)]
+        fill = tuple(rows[0].get("fill") or SPK_FILL[0])
         for q in rows:
             fk=(q["font_px"],); f=fonts.get(fk) or fonts.setdefault(fk, ImageFont.truetype(fp,q["font_px"]))
             st=q["stroke_px"]; x,y=q["x"],q["y"]
@@ -497,6 +537,7 @@ def main():
                     + ("テロップを色分け" if spk_ok else "**確信度が低いので色分けしない**"))
         except Exception as e:
             log(f"  話者分離をスキップ（{e}）")
+    caps = mark_kinds(caps, spk_ok)
     json.dump(caps,open(f"{wd}/captions.json","w"),ensure_ascii=False,indent=1)
 
     log("⑥ 字幕PNG"); seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok)

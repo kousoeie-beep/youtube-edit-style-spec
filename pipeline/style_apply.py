@@ -498,24 +498,50 @@ def bunsetsu(text):
     if not _TAGGER:
         return list(text)                      # 形態素解析が無ければ従来どおり
     JIRITSU = ("名詞", "動詞", "形容詞", "副詞", "連体詞", "接続詞", "感動詞", "代名詞")
-    out = []
+    NOUNISH = ("名詞", "接頭辞", "接尾辞", "記号", "補助記号")
+    SHIJI = {"こう", "そう", "ああ", "どう"}      # 指示副詞。次の動詞と一語で読む
+    # 補助動詞だけを前に繋ぐ。「助詞の後の動詞は繋ぐ」では広すぎて
+    # 「倍速も|できるんですか?」が1文節になり、割る場所が無くなった（2026-08-01）
+    HOJO = ("いう", "いく", "くる", "みる", "おく", "しまう", "ある", "いる",
+            "もらう", "くれる", "あげる", "おる", "ゆく")
+    TE = ("って", "て", "で", "と")
+    out, pos_ = [], []
     for m in _TAGGER(text):
         pos = m.feature.pos1 or ""
-        if out and not (pos in JIRITSU and m.surface and m.surface[0] not in KINSOKU_HEAD):
-            out[-1] += m.surface
+        sur = m.surface
+        if not sur:
+            continue
+        # 【2026-08-01】複合名詞が割れていた（「わざ|マシン」「動画|解説」「新人|研修」）。
+        #  名詞が連続する場合は1語として扱う。接頭辞・接尾辞も同じ塊に入れる。
+        merge = False
+        if out and out[-1] and out[-1][-1] in "、。，．！？!?":
+            merge = False                          # 句読点のあとは必ず切る
+        elif out:
+            if pos in NOUNISH and pos_[-1] in NOUNISH:
+                merge = True                       # 複合名詞
+            elif pos_[-1] == "接頭辞" or pos == "接尾辞":
+                merge = True
+            elif pos_[-1] == "副詞" and pos == "動詞" and out[-1] in SHIJI:
+                merge = True                       # こう+いう / そう+いう
+            elif (pos == "動詞" and pos_[-1] in ("助詞", "動詞")
+                  and out[-1].endswith(TE)
+                  and (m.feature.lemma or sur).startswith(HOJO)):
+                merge = True                       # 「〜っていう」「〜してみる」だけ
+            elif pos == "接頭辞":
+                merge = False                      # 接頭辞は**後ろ**に付く。前に吸わせない
+            elif not (pos in JIRITSU and sur[0] not in KINSOKU_HEAD):
+                merge = True                       # 付属語は自立語にぶら下げる
+        if merge:
+            out[-1] += sur; pos_[-1] = pos
         else:
-            out.append(m.surface)
-    return [x for x in out if x]
+            out.append(sur); pos_.append(pos)
+    return out
 
 
-def wrap_text(text, width_of, max_width):
-    units = bunsetsu(text)
+def _greedy(units, width_of, max_width):
     lines, cur = [], ""
     for u in units:
         if cur and width_of(cur + u) > max_width:
-            # 文節1つで幅を超えるなら、その文節だけ字で割る（他に手が無い）
-            if not cur and width_of(u) > max_width:
-                pass
             lines.append(cur); cur = u
             while width_of(cur) > max_width and len(cur) > 1:
                 k = len(cur)
@@ -525,6 +551,51 @@ def wrap_text(text, width_of, max_width):
             cur += u
     if cur:
         lines.append(cur)
+    return lines
+
+
+def _balanced(units, width_of, max_width, k):
+    """units を k 行に割る。
+
+    ①どの行も幅に収まる ②**句読点で切れている行数が多い** ③最も長い行が短い
+    の順で選ぶ。日本語字幕は行長が揃っていて、かつ句読点で改行されている方が読みやすい。
+
+    2026-08-01: 最初は貪欲に1行目へ詰めていて 幅[740, 164] が出た。
+    次に「最長行を最短化」だけにしたら 幅[380, 812] のように句の途中で切れた。
+    どちらか一方では足りない。
+    """
+    import itertools
+    n = len(units)
+    if k > n:
+        return None
+    PUNCT = "、。，．！？!?"
+    cands = []
+    for cuts in itertools.combinations(range(1, n), k - 1):
+        idx = (0,) + cuts + (n,)
+        lines = ["".join(units[idx[i]:idx[i + 1]]) for i in range(k)]
+        ws = [width_of(l) for l in lines]
+        if max(ws) > max_width:
+            continue
+        pu = sum(1 for i in range(k - 1) if lines[i] and lines[i][-1] in PUNCT)
+        cands.append((max(ws), pu, lines))
+    if not cands:
+        return None
+    m0 = min(c[0] for c in cands)
+    # 最短の1.15倍までは、句読点で切れている方を優先して選ぶ
+    near = [c for c in cands if c[0] <= min(max_width, m0 * 1.15)]
+    near.sort(key=lambda c: (-c[1], c[0]))
+    return near[0][2]
+
+
+def wrap_text(text, width_of, max_width, max_lines=2):
+    units = bunsetsu(text)
+    lines = None
+    for k in range(1, max(1, max_lines) + 1):
+        cand = _balanced(units, width_of, max_width, k)
+        if cand:
+            lines = cand; break
+    if lines is None:
+        lines = _greedy(units, width_of, max_width)
     # 禁則: 行頭に来てしまった字は前の行の末尾へ送る（幅は1字分まで超過を許容）
     for i in range(1, len(lines)):
         while lines[i] and lines[i][0] in KINSOKU_HEAD and lines[i-1]:
@@ -538,7 +609,7 @@ def split_caption(cap, width_of, max_width, max_lines):
     schema.md「max_lines を超えるテキストは折り返さずイベントを分割する」。
     区間は半開 [start, end)。分割は文字数按分。
     """
-    lines = wrap_text(cap["text"], width_of, max_width)
+    lines = wrap_text(cap["text"], width_of, max_width, max_lines)
     if len(lines) <= max_lines:
         return [dict(cap, _lines=lines)]
     out, span = [], cap["end"] - cap["start"]
@@ -556,53 +627,123 @@ def split_caption(cap, width_of, max_width, max_lines):
     return out
 
 
-def render_plan(style, caps, canvas_w, canvas_h):
+# 話者ごとのテロップ色。導出した役に使う。
+SPEAKER_FILL = {
+    "answer":   (255, 255, 255, 255),   # 主たる話者（回答側）＝そのスタイルの標準
+    "question": (255, 226, 138, 255),   # 聞き手（質問側）＝淡い黄
+}
+
+
+def question_role(style, canvas_w, canvas_h):
+    """聞き手用のテロップ役を、そのスタイルの caption role から導出する。
+
+    学習済みスタイルのうち business_talk だけが `question_tab`
+    （対談・インタビュー専用の質問テロップ）を持っている。他のスタイルには無いので、
+    **導出したうえで、そのスタイル本来の役と同じ検算に必ず通す**。
+    通らなければ None を返す（＝色だけの区別に落とす）。
+
+    2026-08-01: これは実測から学習した役ではなく**導出**である。
+    位置を勝手に決めて検算を省くと、4辺やすきまが静かに破れる。
+    候補を走査して、通ったものだけを返す。
+    """
+    cap = style.get("caption_role")
+    if not cap:
+        return None
+    others = [r for r in style["roles"]
+              if r["resolved"] and not r["opaque_fullscreen"]
+              and r["role"] != cap["role"]]
+    font = max(28, int(round(cap["font_px"] * 0.85)))
+    stroke = max(1, int(round((cap["stroke_px"] or 0) * 0.85)))
+    lh = line_height(font)
+    h = lh * (cap["max_lines"] or 2) + stroke * 2
+    w = cap["size"][0] if cap.get("size") else (cap.get("max_width_px") or 0) + stroke * 2
+    cx = cap["center"][0]
+    # 上から順に、置ける一番上の位置を探す
+    for cy in [canvas_h * f for f in (0.16, 0.18, 0.20, 0.22, 0.25, 0.28, 0.32)]:
+        rect = (cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
+        m = {"左": rect[0] - SHADOW_LT, "右": canvas_w - (rect[2] + SHADOW_RB),
+             "上": rect[1] - SHADOW_LT, "下": canvas_h - (rect[3] + SHADOW_RB)}
+        if any(v < MIN_MARGIN for v in m.values()):
+            continue
+        cand = dict(cap, role=cap["role"] + "__question", font_px=font,
+                    stroke_px=stroke, center=(cx, cy),
+                    size=(w, h), rect=rect)
+        if check_four_edges([cand], canvas_w, canvas_h):
+            continue
+        if check_clearance(others + [cand]):
+            continue
+        return cand
+    return None
+
+
+def render_plan(style, caps, canvas_w, canvas_h, speaker_kinds=False):
     """字幕チャンクを、そのスタイルの caption role へ割り当てた描画計画を返す。
 
     1エントリ = 実際に描く1行（x,y はそのまま ImageDraw.text に渡せる座標）。
     同一発話の行は event_index で束ねられる。
+
+    speaker_kinds=True のとき、cap["kind"] == "question" の発話を
+    導出した聞き手用の役（上部・小さめ・淡い黄）へ振り分ける。
+    導出が検算を通らなかった場合は標準の役に戻し、色だけで区別する。
     """
     cap_role = style.get("caption_role")
     if not cap_role:
         raise StyleUnfitError(f"{style['style_id']}: caption 系 role が無い")
-    font_px, stroke_px = cap_role["font_px"], cap_role["stroke_px"] or 0
-    max_lines = cap_role["max_lines"] or 2
-    max_w = cap_role.get("max_width_px") or (cap_role["size"][0]
-                                             - (cap_role["padding_px"] + stroke_px) * 2)
-    cx, cy = cap_role["center"]
-    lh = line_height(font_px)
-    width_of, draw, font = _measurer(font_px, stroke_px)
+    q_role = question_role(style, canvas_w, canvas_h) if speaker_kinds else None
+
+    def setup(role):
+        fp, st = role["font_px"], role["stroke_px"] or 0
+        ml = role["max_lines"] or 2
+        mw = role.get("max_width_px") or (role["size"][0]
+                                          - (role.get("padding_px") or 0 + st) * 2)
+        wof, draw, font = _measurer(fp, st)
+        return {"role": role, "font_px": fp, "stroke_px": st, "max_lines": ml,
+                "max_w": mw, "cx": role["center"][0], "cy": role["center"][1],
+                "lh": line_height(fp), "width_of": wof, "draw": draw, "font": font}
+
+    A = setup(cap_role)
+    Q = setup(q_role) if q_role else A
 
     events = []
     for c in caps:
-        events += split_caption(c, width_of, max_w, max_lines)
+        cfg = Q if (speaker_kinds and c.get("kind") == "question") else A
+        for ev in split_caption(c, cfg["width_of"], cfg["max_w"], cfg["max_lines"]):
+            ev["_kind"] = c.get("kind") or "answer"
+            events.append(ev)
 
     plan = []
     for ei, ev in enumerate(events):
-        lines = ev.get("_lines") or wrap_text(ev["text"], width_of, max_w)
-        lines = lines[:max_lines]
+        q = speaker_kinds and ev["_kind"] == "question"
+        cfg = Q if q else A
+        cx, cy, lh = cfg["cx"], cfg["cy"], cfg["lh"]
+        draw, font, st = cfg["draw"], cfg["font"], cfg["stroke_px"]
+        lines = (ev.get("_lines")
+                 or wrap_text(ev["text"], cfg["width_of"], cfg["max_w"], cfg["max_lines"]))
+        lines = lines[:cfg["max_lines"]]
         top = cy - lh * len(lines) / 2
         for k, ln in enumerate(lines):
             if draw is not None:
-                b = draw.textbbox((0, 0), ln, font=font, stroke_width=stroke_px)
+                b = draw.textbbox((0, 0), ln, font=font, stroke_width=st)
                 w = b[2] - b[0]
                 x = cx - w / 2 - b[0]
                 y = top + lh * k - b[1]
                 ink = (cx - w / 2, top + lh * k,
                        cx + w / 2, top + lh * k + (b[3] - b[1]))
             else:
-                w = width_of(ln)
+                w = cfg["width_of"](ln)
                 x, y = cx - w / 2, top + lh * k
                 ink = (x, y, x + w, y + lh)
             plan.append({
-                "role": cap_role["role"], "text": ln,
+                "role": cfg["role"]["role"], "text": ln,
                 "x": int(round(x)), "y": int(round(y)),
-                "font_px": font_px, "stroke_px": stroke_px,
+                "font_px": cfg["font_px"], "stroke_px": st,
                 "start": ev["start"], "end": ev["end"],   # 半開区間 [start, end)
-                "z_order": cap_role["z_order"],
+                "z_order": cfg["role"]["z_order"],
                 "event_index": ei, "line_index": k, "lines": len(lines),
                 "bbox": tuple(round(v, 1) for v in ink),
                 "split": bool(ev.get("_split")),
+                "kind": ev["_kind"],
+                "fill": SPEAKER_FILL["question" if q else "answer"],
             })
     return plan
 
