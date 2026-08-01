@@ -7,6 +7,7 @@
 import sys, json
 sys.path.insert(0, "/Users/kousuke/Documents/編集作業/pipeline")
 import style_apply as SA
+import run as R
 from PIL import Image, ImageDraw
 
 # 実素材の字幕を使う（人工文字列だと形態素解析を一度も通さないまま通ってしまう）
@@ -40,6 +41,16 @@ for sid in SA.all_style_ids():
         except Exception:
             continue
         plan = SA.render_plan(st, CAPS, cw, ch, speaker_kinds=True)
+        # 【2026-08-01】検証は**実際に描くもの全部**を覆っていないと意味がない。
+        #  論点見出し帯と強調テロップを足したのに、検証は字幕しか見ていなかった。
+        items = R.topic_items(CAPS, 134.7)
+        for rn in ("title_bar", "chapter_tag", "chapter_tab", "question_tab", "running_outline"):
+            if any(x["role"] == rn and x["resolved"] and x.get("font_px") for x in st["roles"]):
+                plan += SA.render_role(st, rn, items, cw, ch); break
+        kws = R.keyword_items(CAPS, items, 134.7)
+        for rn in ("keyword", "positive_keyword", "shock_keyword", "highlight_marker"):
+            if any(x["role"] == rn and x["resolved"] and x.get("font_px") for x in st["roles"]):
+                plan += SA.render_role(st, rn, kws, cw, ch); break
         im = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
         d = ImageDraw.Draw(im)
         worst = {"左": 1e9, "右": 1e9, "上": 1e9, "下": 1e9}

@@ -424,6 +424,59 @@ def topic_items(caps, dur):
     return out
 
 
+def keyword_items(caps, topics, dur):
+    """強調テロップに出す語を選ぶ。
+
+    規則は environment-notes L17 に既にある（実装が無かっただけ）:
+      ・重要語・固有名詞・意外な主張のみ
+      ・1トピック1回
+      ・**同時刻の通常字幕と同一文言の復唱禁止**（字幕の消滅実時刻 +0.12s 以降に配置）
+
+    2026-08-01: 候補を素直に「名詞」で取ると デザイン/モデル/ページ のような
+    一般語が並ぶ。**それは「重要語」ではない。**
+    製品名・固有名詞（英数字トークン）と、素材ごとに与えた KEYWORDS に絞る。
+    """
+    from fugashi import Tagger
+    tg = Tagger()
+    kw = {k for k in KEYWORDS}
+    cand = []
+    for c in caps:
+        for m in tg(c["text"]):
+            t = m.surface
+            if (m.feature.pos1 or "") != "名詞":
+                continue
+            ok = (t.isascii() and t.isalnum() and len(t) >= 3) or t in kw
+            if ok:
+                cand.append({"text": t, "cap": c})
+    # 【2026-08-01】最初に出てきた語を採ると、その話題で一番大事な語が落ちる
+    #  （「営業」が先に出て NotebookLM が消えた）。**話題ごとに最も固有性の高い語**を採る。
+    #  優先度: 製品名・英数字の固有名詞 > 与えられたキーワード > 長い語
+    by_topic = {}
+    for x in cand:
+        tp = next((i for i, it in enumerate(topics)
+                   if it["start"] <= x["cap"]["start"] < it["end"]), -1)
+        by_topic.setdefault(tp, []).append(x)
+
+    def rank(x):
+        t = x["text"]
+        return (0 if (t.isascii() and t.isalnum()) else 1, -len(t))
+
+    used, out = set(), []
+    for tp in sorted(by_topic):
+        for x in sorted(by_topic[tp], key=rank):
+            if x["text"] in used:
+                continue                  # 1本につき1回（同語の繰り返しを出さない）
+            st = x["cap"]["end"] + 0.12   # 字幕が消えてから出す（復唱にしない）
+            en = min(dur, st + 2.0)
+            if en - st < 0.6:
+                continue
+            used.add(x["text"])
+            out.append({"text": x["text"], "start": round(st, 2),
+                        "end": round(en, 2), "_topic": tp})
+            break                          # 1トピック1回
+    return sorted(out, key=lambda o: o["start"])
+
+
 def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
@@ -447,9 +500,35 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
             log(f"  スタイル {style_id} を適用: {ev}イベント / {len(plan)}行")
             # 常駐の論点見出し帯。**字幕しか描かないのは「スタイルを再現した」とは言えない**
             items = topic_items(caps, env["dur"])
-            bar = SA.render_role(st, "title_bar", items, W, H) if items else []
+            # 見出し系の役は「現在の話題」を出すという同じ機能なので、
+            # どれか1つでも解決していればそこへ流す（別実装を作らない）。
+            TOPIC_ROLES = ("title_bar", "chapter_tag", "chapter_tab",
+                           "question_tab", "running_outline")
+            bar, bar_role = [], None
+            for rn in TOPIC_ROLES:
+                if not items: break
+                r = next((x for x in st["roles"]
+                          if x["role"] == rn and x["resolved"] and x.get("font_px")), None)
+                if r:
+                    bar = SA.render_role(st, rn, items, W, H)
+                    if bar: bar_role = rn; break
             if bar:
-                log(f"  論点見出し帯 {len(items)}件（話題の切れ目＝質問文）")
+                log(f"  論点見出し（{bar_role}）{len(items)}件（話題の切れ目＝質問文）")
+            elif items:
+                log("  ⚠ このスタイルに見出し系の役が無いので論点見出しは出さない")
+            # 強調テロップ。選定規則は environment-notes L17 に既にあった（実装が無かった）
+            KW_ROLES = ("keyword", "positive_keyword", "shock_keyword", "highlight_marker")
+            kws = keyword_items(caps, items, env["dur"]) if items else []
+            for rn in KW_ROLES:
+                r = next((x for x in st["roles"]
+                          if x["role"] == rn and x["resolved"] and x.get("font_px")), None)
+                if r and kws:
+                    k = SA.render_role(st, rn, kws, W, H)
+                    if k:
+                        bar += k
+                        log(f"  強調テロップ（{rn}）{len(kws)}件"
+                            f"：{'・'.join(x['text'] for x in kws)}")
+                        break
             # ロゴバッジ。**描けない役を黙って飛ばすと「再現した」が静かに嘘になる**
             npr = next((r for r in st["roles"]
                         if r["role"] == "nameplate" and r["resolved"]), None)
