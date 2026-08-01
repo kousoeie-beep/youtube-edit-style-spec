@@ -9,9 +9,11 @@ description: 素材（動画/音声/台本/画像）を渡すだけで基準プ�
 
 一次指示書は **auto-youtube-edit-agent 仕様書**。実行前に必ずクローンして全文読むこと：
 
-```bash
-git clone https://github.com/zettai-code/auto-youtube-edit-agent.git <scratchpad>/auto-youtube-edit-agent
-# 読む: auto_youtube_edit_agent.md（カット基準/字幕規則/テロップenum/音声処理/サムネ5案/品質チェック/edit_log義務）
+**同梱済み**（2026-07-31 統合。以前は別リポジトリだった）:
+
+```
+../auto-youtube-edit-agent/auto_youtube_edit_agent.md
+# カット基準 / 字幕規則 / テロップenum / 音声処理 / サムネ5案 / 品質チェック / edit_log義務
 ```
 
 本スキルは仕様書に、①このMacの環境知見 ②字幕品質v2手順 ③納品運用ルール を上書き追加するもの。矛盾したら本スキルが優先（ローカル環境の実測に基づくため）。
