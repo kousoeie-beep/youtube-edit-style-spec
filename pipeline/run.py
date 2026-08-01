@@ -424,7 +424,7 @@ def topic_items(caps, dur):
     return out
 
 
-def capseq(caps, env, wd, style_id=None, spk_ok=False):
+def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
     fp = next((q for q in (
@@ -436,7 +436,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
         sys.exit("NotoSansJP-Bold.ttf が見つからない。~/Library/Fonts/ に入れてください")
 
     # ── スタイル定義を使う経路。失敗したら既定レイアウトに落ちる（無音で落ちない）
-    plan = None
+    plan = None; bar = []; badge = None
     if style_id:
         try:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -450,6 +450,19 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
             bar = SA.render_role(st, "title_bar", items, W, H) if items else []
             if bar:
                 log(f"  論点見出し帯 {len(items)}件（話題の切れ目＝質問文）")
+            # ロゴバッジ。**描けない役を黙って飛ばすと「再現した」が静かに嘘になる**
+            npr = next((r for r in st["roles"]
+                        if r["role"] == "nameplate" and r["resolved"]), None)
+            if npr:
+                badge = SA.image_role(st, "nameplate", logo, W, H)
+                if not badge:
+                    log("  ⚠ nameplate（ロゴバッジ）はこのスタイルの常駐要素だが、"
+                        "画像が渡されていないので**描いていない**（--logo で渡せる）")
+                elif not os.path.exists(badge["path"]):
+                    log(f"  ⚠ ロゴ {badge['path']} が見つからない → nameplate は描かない")
+                    badge = None
+                else:
+                    log(f"  ロゴバッジ {badge['box']} に {os.path.basename(badge['path'])}")
         except Exception as e:
             log(f"  ⚠ スタイル {style_id} は適用できない（{e}）→ 既定レイアウト")
             plan = None
@@ -503,6 +516,13 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
     for key in uniq:
         ci, bi = key
         im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
+        if badge:                       # 常駐なので全PNGに乗せる
+            b = Image.open(badge["path"]).convert("RGBA")
+            x0, y0, x1, y1 = badge["box"]
+            bw, bh = x1 - x0, y1 - y0
+            k = min(bw / b.width, bh / b.height)      # 縦横比を保って内接
+            b = b.resize((max(1, int(b.width * k)), max(1, int(b.height * k))))
+            im.alpha_composite(b, (x0 + (bw - b.width) // 2, y0 + (bh - b.height) // 2))
         rows = (ev.get(ci) or []) + (bev.get(bi) or [])
         for q in sorted(rows, key=lambda r: r.get("z_order") or 0):
             fk=(q["font_px"],); f=fonts.get(fk) or fonts.setdefault(fk, ImageFont.truetype(fp,q["font_px"]))
@@ -566,6 +586,7 @@ def main():
     ap.add_argument("--keywords",default=None,help="カンマ区切り。素材固有の用語")
     ap.add_argument("--style",default=None,help="styles/*.yaml の style_id（例: kirinuki）")
     ap.add_argument("--no-diarize",action="store_true")
+    ap.add_argument("--logo",default=None,help="チャンネルロゴ画像。スタイルが nameplate を持つとき使う")
     a=ap.parse_args()
     global KEYWORDS
     if a.keywords: KEYWORDS = [x.strip() for x in a.keywords.split(",") if x.strip()]
@@ -615,7 +636,8 @@ def main():
     caps = mark_kinds(caps, spk_ok)
     json.dump(caps,open(f"{wd}/captions.json","w"),ensure_ascii=False,indent=1)
 
-    log("⑥ 字幕PNG"); seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok)
+    log("⑥ 字幕PNG")
+    seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok,logo=a.logo)
     log("⑦ レンダリング"); outp=f"{dist}/final.mp4"
     rc=render(src,seq,env,outp,wd)
     log("⑧ 納品パック"); qc=pack(caps,outp,wd,dist)

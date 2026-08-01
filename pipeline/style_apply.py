@@ -960,6 +960,25 @@ def fit_text(text, width_of, max_width, max_lines=1):
     return (out + "…") if out else text[:1] + "…"
 
 
+def image_role(style, role_name, img_path, canvas_w, canvas_h):
+    """ロゴのような**供給画像**を役の矩形へ収める指示を返す。
+
+    2026-08-01: kirinuki の nameplate は `text_content: none` の丸バッジで、
+    パイプラインには描きようがない（素材が要る）。描けないものを黙って
+    飛ばすと「スタイルを再現した」という主張が静かに嘘になるので、
+    素材を渡す口を用意し、渡されなかったことはログに出す。
+
+    返すのは {"box": (x0,y0,x1,y1), "path": str}。縦横比は保ち、矩形に内接させる。
+    """
+    r = next((x for x in style["roles"]
+              if x["role"] == role_name and x["resolved"]), None)
+    if not r or not img_path:
+        return None
+    return {"role": role_name, "path": img_path,
+            "box": tuple(round(v) for v in r["rect"]),
+            "z_order": r["z_order"]}
+
+
 def verify_plan(plan, style, canvas_w, canvas_h):
     """描画計画そのものを 4辺16px・他role とのすきま16px で検算する。"""
     edges, gaps = [], []
