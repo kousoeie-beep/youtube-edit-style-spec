@@ -366,6 +366,64 @@ def mark_kinds(caps, spk_ok):
 # 位置を変えるより安全（位置を動かすと4辺検算とすきま検算がやり直しになる）。
 SPK_FILL = [(255,255,255,255), (255,224,138,255), (168,230,255,255)]
 
+def topic_items(caps, dur):
+    """論点見出しの帯に流す項目を作る。
+
+    kirinuki の title_bar は「現在の論点を要約した一言を常時表示、話題転換で差し替え」。
+    インタビューでは**質問が話題の切れ目**なので、そこを根拠に区切る。
+
+    2026-08-01: 見出しを機械的に書き換える案は捨てた。
+    「今後どういったところに使えそうなイメージありますか?」を規則で縮めると
+    日本語として不自然になる。**話題を開いた質問文をそのまま使い、帯の幅に
+    文節単位で収める**（発明せず素材に根拠を置く）。要約は人が上書きできる。
+    """
+    # 【2026-08-01】質問の**字幕**を見出しにしたら断片ばかりになった
+    #  （「教えてほしいです」「できるんですか?」）。字幕は16字前後で切っているので、
+    #  1つの質問文が複数の字幕に散る。**文に組み直してから**話題の切れ目を取る。
+    sents, cur = [], []
+    for c in caps:
+        cur.append(c)
+        if c["text"].rstrip().endswith(("。", "？", "?", "！", "!")):
+            sents.append(cur); cur = []
+    if cur:
+        sents.append(cur)
+    # 見出しの先頭に来るフィラーを落とす（話題名として意味を持たない）
+    HEAD_FILLER = ("だから、", "で、", "えー", "あの", "まあ", "ちょっと",
+                   "なんか", "それで、", "というか", "あ、", "はい、")
+    MIN_TOPIC = 10          # これ未満は相槌的な短い問い返し。話題の切れ目にしない
+    qs = []
+    for sn in sents:
+        t = "".join(x["text"] for x in sn)
+        if not any(x.get("kind") == "question" for x in sn):
+            continue
+        t = t.rstrip("。")
+        changed = True
+        while changed:
+            changed = False
+            for h in HEAD_FILLER:
+                if t.startswith(h):
+                    t = t[len(h):]; changed = True
+        if len(t) < MIN_TOPIC:
+            continue        # 「できるんですか?」のような問い返しは話題を作らない
+        # 【2026-08-01】帯の開始は質問が**終わってから**。
+        #  environment-notes「同時刻の通常字幕と同一文言の復唱禁止」。
+        #  質問を喋っている間は質問テロップが同じ文言を出しているので、
+        #  帯にも同時に出すと画面に同じ文が2つ並ぶ（実際に v11 で並んだ）。
+        qs.append({"text": t, "start": sn[-1]["end"] + 0.12,
+                   "topic_start": sn[0]["start"]})
+    if not qs:
+        return []
+    out = []
+    for i, q in enumerate(qs):
+        # 次の話題は「次の質問が始まる時刻」で終わる（帯の重なりを作らない）
+        end = qs[i + 1]["topic_start"] if i + 1 < len(qs) else dur
+        if end - q["start"] < 1.0:
+            continue                      # 出ている時間が1秒未満の帯は出さない
+        out.append({"text": q["text"], "start": q["start"], "end": end})
+    # 最初の質問より前は見出しを出さない（根拠が無い区間に見出しを立てない）
+    return out
+
+
 def capseq(caps, env, wd, style_id=None, spk_ok=False):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
@@ -387,6 +445,11 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
             plan = SA.render_plan(st, caps, W, H, speaker_kinds=True)
             ev = len({p["event_index"] for p in plan})
             log(f"  スタイル {style_id} を適用: {ev}イベント / {len(plan)}行")
+            # 常駐の論点見出し帯。**字幕しか描かないのは「スタイルを再現した」とは言えない**
+            items = topic_items(caps, env["dur"])
+            bar = SA.render_role(st, "title_bar", items, W, H) if items else []
+            if bar:
+                log(f"  論点見出し帯 {len(items)}件（話題の切れ目＝質問文）")
         except Exception as e:
             log(f"  ⚠ スタイル {style_id} は適用できない（{e}）→ 既定レイアウト")
             plan = None
@@ -414,36 +477,48 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False):
                              "bbox":(( W-(b[2]-b[0]))//2, y0+LH*k,
                                      (W+(b[2]-b[0]))//2, y0+LH*k+LH)})
 
-    # 描画行を「同時に出る1枚」へ束ねる
+    # 描画行を「同時に出る1枚」へ束ねる。
+    # 常駐帯は字幕と独立に切り替わるので、**(字幕イベント, 帯イベント) の組**でPNGを作る。
     ev = {}
     for q in plan: ev.setdefault(q["event_index"], []).append(q)
+    bev = {}
+    for q in bar: bev.setdefault(q["event_index"], []).append(q)
 
-    def speaker_of(t):
-        for c in caps:
-            if c["start"] <= t < c["end"]: return c.get("speaker")
-        return None
+    def at(d, t):
+        for i, rows in d.items():
+            if rows[0]["start"] <= t < max(r["end"] for r in rows): return i
+        return -1
+
+    FPS_ = FPS
+    n = int(env["dur"] * FPS_) + 1
+    keys = []
+    for fr in range(n):
+        t = fr / FPS_
+        keys.append((at(ev, t), at(bev, t)))
+    uniq = sorted(set(keys))
 
     fonts = {}
     out=f"{wd}/capseq"; shutil.rmtree(out,ignore_errors=True); os.makedirs(out)
-    blank=f"{out}/_b.png"; Image.new("RGBA",(W,H),(0,0,0,0)).save(blank)
-    ng=set(); M={}; span={}
-    for ei, rows in sorted(ev.items()):
+    ng=set(); M={}
+    for key in uniq:
+        ci, bi = key
         im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
-        fill = tuple(rows[0].get("fill") or SPK_FILL[0])
-        for q in rows:
+        rows = (ev.get(ci) or []) + (bev.get(bi) or [])
+        for q in sorted(rows, key=lambda r: r.get("z_order") or 0):
             fk=(q["font_px"],); f=fonts.get(fk) or fonts.setdefault(fk, ImageFont.truetype(fp,q["font_px"]))
             st=q["stroke_px"]; x,y=q["x"],q["y"]
+            fill = tuple(q.get("fill") or SPK_FILL[0])
             d.text((x+3,y+3),q["text"],font=f,fill=(0,0,0,115),stroke_width=st,stroke_fill=(0,0,0,115))
             d.text((x,y),q["text"],font=f,fill=fill,stroke_width=st,stroke_fill=(0,0,0,255))
             x0,y0,x1,y1=q["bbox"]
-            if x0-3<16 or x1+12>W-16 or y0-3<16 or y1+12>H-16: ng.add(ei)
-        M[ei]=f"{out}/_m{ei:03d}.png"; im.save(M[ei])
-        span[ei]=(rows[0]["start"], max(q["end"] for q in rows))
-    n=int(env["dur"]*FPS)+1; act=[-1]*n
-    for ei,(a,b) in span.items():
-        for fr in range(int(a*FPS), min(n,int(b*FPS)+1)): act[fr]=ei
-    for fr in range(n): os.link(M[act[fr]] if act[fr]>=0 else blank, f"{out}/{fr:05d}.png")
-    log(f"  字幕PNG {len(M)}枚 / 連番{n} / 4辺検算NG {len(ng)}件")
+            if x0-3<16 or x1+12>W-16 or y0-3<16 or y1+12>H-16: ng.add(key)
+        if not rows:
+            M[key]=f"{out}/_blank.png"
+            if not os.path.exists(M[key]): im.save(M[key])
+            continue
+        M[key]=f"{out}/_m{uniq.index(key):03d}.png"; im.save(M[key])
+    for fr in range(n): os.link(M[keys[fr]], f"{out}/{fr:05d}.png")
+    log(f"  字幕PNG {len(set(M.values()))}枚 / 連番{n} / 4辺検算NG {len(ng)}件")
     return out, len(ng)
 
 # ── 6. レンダリング（loudnorm 2パス・HWエンコード）

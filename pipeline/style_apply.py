@@ -903,6 +903,63 @@ def render_plan(style, caps, canvas_w, canvas_h, speaker_kinds=False):
     return plan
 
 
+def render_role(style, role_name, items, canvas_w, canvas_h):
+    """caption 以外の役にもテキストを流し込む。
+
+    2026-08-01: run.py は**字幕しか描いていなかった**。kirinuki には論点見出しの
+    常駐帯があるのに一度も描かれず、「スタイルを再現した」と言えない状態だった。
+    折返し・禁則・4辺検算は caption と同じ機械を通す（別実装を作らない）。
+
+    items: [{"text": str, "start": float, "end": float}, ...]
+    """
+    r = next((x for x in style["roles"]
+              if x["role"] == role_name and x["resolved"]), None)
+    if not r or not r.get("font_px"):
+        return []
+    fp, st = r["font_px"], r["stroke_px"] or 0
+    ml = r["max_lines"] or 1
+    mw = r.get("max_width_px") or (r["rect"][2] - r["rect"][0] - st * 2)
+    wof, draw, font = _measurer(fp, st)
+    lh = line_height(fp)
+    cx = (r["rect"][0] + r["rect"][2]) / 2
+    cy = (r["rect"][1] + r["rect"][3]) / 2
+    plan = []
+    for ei, it in enumerate(items):
+        lines = wrap_text(it["text"], wof, mw, ml)[:ml]
+        top = cy - lh * len(lines) / 2
+        for k, ln in enumerate(lines):
+            b = draw.textbbox((0, 0), ln, font=font, stroke_width=st)
+            w = b[2] - b[0]
+            plan.append({
+                "role": role_name, "text": ln,
+                "x": int(round(cx - w / 2 - b[0])), "y": int(round(top + lh * k - b[1])),
+                "font_px": fp, "stroke_px": st,
+                "start": it["start"], "end": it["end"],
+                "z_order": r["z_order"], "event_index": ei, "line_index": k,
+                "lines": len(lines), "persistent": True,
+                "bbox": (cx - w / 2, top + lh * k,
+                         cx + w / 2, top + lh * k + (b[3] - b[1])),
+                "fill": (255, 255, 255, 255),
+            })
+    return plan
+
+
+def fit_text(text, width_of, max_width, max_lines=1):
+    """1行に収まるところまで**文節単位で**削り、削ったら「…」を付ける。
+
+    字で切ると語の途中で切れる。見出しは特にみっともないので文節で落とす。
+    """
+    u = bunsetsu(text)
+    if width_of(text) <= max_width * max_lines:
+        return text
+    out = ""
+    for x in u:
+        if width_of(out + x + "…") > max_width * max_lines:
+            break
+        out += x
+    return (out + "…") if out else text[:1] + "…"
+
+
 def verify_plan(plan, style, canvas_w, canvas_h):
     """描画計画そのものを 4辺16px・他role とのすきま16px で検算する。"""
     edges, gaps = [], []
