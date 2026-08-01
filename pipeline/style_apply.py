@@ -808,15 +808,18 @@ def question_role(style, canvas_w, canvas_h):
     stroke = max(1, int(round((cap["stroke_px"] or 0) * 0.85)))
     lh = line_height(font)
     h = lh * (cap["max_lines"] or 2) + stroke * 2
-    w = cap["size"][0] if cap.get("size") else (cap.get("max_width_px") or 0) + stroke * 2
-    cx = cap["center"][0]
+    # 【2026-08-01】幅は `size` からではなく **補正後の caption 矩形**から取る。
+    #  fit_edges が寄せたり縮めたりした結果が rect には入っているが size には入っていない。
+    #  ai_biz_pitch 縦は字幕がほぼ全幅（1035/1080）で、size をコピーすると
+    #  質問箱が4辺を割り、候補が全滅していた。字幕が通っている横位置をそのまま使う。
+    w = cap["rect"][2] - cap["rect"][0]
+    cx = (cap["rect"][0] + cap["rect"][2]) / 2
     # 上から順に、置ける一番上の位置を探す
     for cy in [canvas_h * f for f in (0.16, 0.18, 0.20, 0.22, 0.25, 0.28, 0.32)]:
+        # 【2026-08-01】ここに事前ふるいを書いていたが、`color_shadow: none` を
+        #  見ておらず、影を持たない字幕に影を足して候補を全滅させていた
+        #  （ai_biz_pitch 縦）。**同じ判定を2箇所に書かない。** check_four_edges 1本に任せる。
         rect = (cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
-        m = {"左": rect[0] - SHADOW_LT, "右": canvas_w - (rect[2] + SHADOW_RB),
-             "上": rect[1] - SHADOW_LT, "下": canvas_h - (rect[3] + SHADOW_RB)}
-        if any(v < MIN_MARGIN for v in m.values()):
-            continue
         cand = dict(cap, role=cap["role"] + "__question", font_px=font,
                     stroke_px=stroke, center=(cx, cy),
                     size=(w, h), rect=rect)
