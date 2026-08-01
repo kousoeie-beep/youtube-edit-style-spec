@@ -13,6 +13,25 @@ from PIL import Image, ImageDraw
 CAPS = json.load(open("/Users/kousuke/Documents/編集作業/IMG_2514_v9/work/captions.json"))
 SHADOW_RB, SHADOW_LT, MIN = 12, 3, 16
 
+def selftest():
+    """**この検査が画面外を検出できることを、毎回まず確かめる。**
+
+    2026-08-01: 「一致被覆100%」は埋め合わせの後に数えていて構造的に100%だった。
+    「4辺検算NG 0件」は size 宣言ありのroleしか見ていなかった。
+    0という結果は、0でない場合を検出できることを示してからでないと意味がない。
+    """
+    cw, ch = 1080, 1920
+    f = SA._pil_font(72)
+    im = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    ImageDraw.Draw(im).text((-40, 500), "画面外にはみ出す行", font=f, fill=(255,255,255,255))
+    bb = im.getbbox()
+    if not bb or bb[0] - SHADOW_LT >= MIN:
+        raise SystemExit("自己確認に失敗: わざとはみ出させても検出できない。検査が壊れている")
+    print(f"自己確認: わざとはみ出させた行で左 {bb[0]-SHADOW_LT}px を検出 → 検査は生きている\n")
+
+
+selftest()
+
 rows = []
 for sid in SA.all_style_ids():
     for cw, ch, lb in ((1920, 1080, "横"), (1080, 1920, "縦")):
