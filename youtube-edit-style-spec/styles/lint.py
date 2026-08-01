@@ -8,12 +8,12 @@
 
 終了コード: 0=クリーン / 1=違反あり
 """
-import sys, glob, os, re
+import sys, glob, os, re, math
 import yaml
 from yaml.constructor import SafeConstructor
 
 STYLES = os.path.dirname(os.path.abspath(__file__))
-FONT_PX_DEFAULT = 92  # 基準プリセット既定値。全角1字≒フォントサイズで概算する
+FONT_PX_DEFAULT = 92  # chaenデフォルト。全角1字≒フォントサイズで概算する
 
 # 【2026-07-27 R11】フォントのキーは二段・多段roleが増えるたびに増える。
 # **3箇所に別々の一覧を書いていたため、running_outline に font_px_title を
@@ -318,7 +318,7 @@ def check_size_covers_width():
             # 【2026-07-27 R6・lint自身の実装バグ】フチ（袋文字のストローク）を
             # 数えていなかったため、ai_biz_pitch shock の旧値1809（正しくは1792+24=1816）を
             # **この検査のために入れたのに検出できなかった**。
-            # stroke_px があればそれ、無ければ 基準プリセット既定値の12pxを両側に見る。
+            # stroke_px があればそれ、無ければ chaen デフォルトの12pxを両側に見る。
             stroke = l.get("stroke_px")
             if not isinstance(stroke, int):
                 stroke = 12 if "袋文字" in str(l.get("style", "")) else 0
@@ -580,10 +580,27 @@ def _rect(l, variant=None):
         ml = l.get("max_lines") if isinstance(l.get("max_lines"), int) else 1
         font = _font_of(l)
         pad = l.get("padding_px") if isinstance(l.get("padding_px"), int) else 0
-        st = l.get("stroke_px") if isinstance(l.get("stroke_px"), int) else 0
+        # 【2026-08-01 R12】既定を0にしていたのは非対称だった。font_px の既定は 92 を
+        # 当てているのに、対になるフチを0にすると箱が実物より痩せ、境界すれすれの
+        # role が余裕ありに見える。schema と各yamlの caption_font は
+        # 「フォント92／黒フチ12px」を**1組で**規定しているので、比で既定を置く。
+        st = l.get("stroke_px") if isinstance(l.get("stroke_px"), int) \
+             else max(1, math.ceil(font * 12 / 92))
         w = float(mw) + (pad + st) * 2
         h = font * 1.46 * ml + (pad + st) * 2   # 行高 ≒ font×1.46（実測）
     return (cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
+
+
+def _shadow(l, r):
+    """矩形に影を足す。**この1本だけを全検査で使う。**
+
+    2026-08-01 R12: 影を足す処理が check_clearance_between_roles の内側に
+    閉じ込められており、交差検査は素の矩形で見ていた。同じ「重なり」を
+    検査ごとに違う矩形で見た結果、影込みなら5%を超える交差を4%として捨てていた。
+    """
+    if str(l.get("color_shadow", "")).strip('"') == "none":
+        return r
+    return (r[0] - SHADOW_LT, r[1] - SHADOW_LT, r[2] + SHADOW_RB, r[3] + SHADOW_RB)
 
 
 def check_sized_rects_intersect():
@@ -609,7 +626,7 @@ def check_sized_rects_intersect():
                 ra = _rect(a, vb0 if isinstance(vb0, str) else None)
                 rb = _rect(b, va0 if isinstance(va0, str) else None)
                 if not ra:
-                    break
+                    continue          # 【2026-08-01 R12】break だと相手の変種次第で残りを取りこぼす
                 if not rb or b.get("opaque_fullscreen") or a["role"] == b["role"]:
                     continue
                 va, vb = va0, vb0
@@ -618,8 +635,12 @@ def check_sized_rects_intersect():
                 if _linked(a, b, "mutually_exclusive_with") or \
                    _linked(a, b, "intentional_overlap_with"):
                     continue
-                ox = min(ra[2], rb[2]) - max(ra[0], rb[0])
-                oy = min(ra[3], rb[3]) - max(ra[1], rb[1])
+                # 【2026-08-01 R12】素の矩形で見ていたので、影込みなら5%を超える
+                #  交差を「4%」として捨てていた（japan_vlog 4%→12%）。
+                #  同じ「重なり」を検査ごとに違う矩形で見ない。
+                sa, sb = _shadow(a, ra), _shadow(b, rb)
+                ox = min(sa[2], sb[2]) - max(sa[0], sb[0])
+                oy = min(sa[3], sb[3]) - max(sa[1], sb[1])
                 if ox <= 0 or oy <= 0:
                     continue
                 smaller = min((ra[2] - ra[0]) * (ra[3] - ra[1]),
@@ -910,23 +931,27 @@ def check_four_edges():
     for f in sorted(glob.glob(os.path.join(STYLES, "*.yaml"))):
         name, layers, _ = _layers(f)
         for l in layers:
-            sz, po = l.get("size"), l.get("position")
-            if not isinstance(sz, dict) or not isinstance(po, dict):
+            # 【2026-08-01 R12・重大な穴の修正】旧実装は `size` を宣言した role しか
+            # 見ておらず、`max_width_px` だけの role を**1周も検査していなかった**。
+            # 11周にわたる「4辺検算NG 0件」はこの見逃しの上に乗っていた。
+            # R9 の `_rect()` は既に「推定してでも見る」を実装済みで、すきま検算と
+            # 矩形交差検算はそれを使っている。**この検算だけが取り残されていた。**
+            if not isinstance(l.get("position"), dict):
                 continue
             if l.get("opaque_fullscreen") or l.get("edge_bleed"):
                 continue
-            try:
-                cx, cy = float(po["centerX"]) * 1920, float(po["centerY"]) * 1080
-                w, h = float(sz["width"]), float(sz["height"])
-            except (KeyError, TypeError, ValueError):
+            r = _rect(l)
+            if not r:
                 continue
+            x0, y0, x1, y1 = r
+            est = "" if isinstance(l.get("size"), dict) else "（推定矩形）"
             no_shadow = str(l.get("color_shadow", "")).strip('"') == "none"
             rb, lt = (0, 0) if no_shadow else (SHADOW_RB, SHADOW_LT)
-            m = {"左": cx - w / 2 - lt, "右": 1920 - (cx + w / 2 + rb),
-                 "上": cy - h / 2 - lt, "下": 1080 - (cy + h / 2 + rb)}
+            m = {"左": x0 - lt, "右": 1920 - (x1 + rb),
+                 "上": y0 - lt, "下": 1080 - (y1 + rb)}
             bad = {k: round(v, 1) for k, v in m.items() if v < 16}
             if bad:
-                out.append(f"  {name}/{l['role']}: 余裕16px未満 {bad}"
+                out.append(f"  {name}/{l['role']}: 余裕16px未満 {bad}{est}"
                            f"（フチ合わせが設計なら edge_bleed: true を書く）")
     return out
 
@@ -1008,19 +1033,21 @@ def check_clearance_between_roles():
                 if not ra or not rb:
                     continue
                 # 影を足した実効矩形
-                def sh(l, r):
-                    if str(l.get("color_shadow", "")).strip('"') == "none":
-                        return r
-                    return (r[0] - 3, r[1] - 3, r[2] + 12, r[3] + 12)
-                ra, rb = sh(a, ra), sh(b, rb)
+                ra, rb = _shadow(a, ra), _shadow(b, rb)
                 gx = max(ra[0], rb[0]) - min(ra[2], rb[2])   # 水平のすきま
                 gy = max(ra[1], rb[1]) - min(ra[3], rb[3])   # 垂直のすきま
                 gap = max(gx, gy)     # どちらかが空いていれば離れている
                 # 【R10】浮動小数の誤差でちょうど16.0pxが弾かれるので許容幅を持たせる
-                if 0 <= gap < 16 - 1e-6:
+                # 【2026-08-01 R12】下限 `0 <=` を外した。負のすきま＝交差を
+                #  「交差検査の担当」として除外していたが、その交差検査は
+                #  面積比5%未満を捨てる。**面積比5%未満の交差はどちらにも映らなかった。**
+                #  実測3件（ai_biz_pitch -26.6px / japan_vlog -19.3px /
+                #  documentary_narrated_jp -24.8px）が全部この隙間に落ちていた。
+                if gap < 16 - 1e-6:
                     axis = "横" if gx > gy else "縦"
+                    kind = "交差" if gap < 0 else "すきま"
                     out.append(f"  {name}: {a['role']} と {b['role']} の"
-                               f"{axis}のすきまが {gap:.1f}px（16px未満）")
+                               f"{axis}の{kind}が {gap:.1f}px（16px以上必要）")
     return out
 
 
@@ -1131,6 +1158,10 @@ def main():
             print(f"     {h}")
         warn += len(hits)
     print()
+    # 【2026-08-01 R12】検査の適用範囲を必ず言う。この lint は _rect() が
+    #  1920x1080 をハードコードしているため、**縦キャンバスを一度も見ていない**。
+    #  「違反0件」は「横で0件」の意味しか持たない。縦は style_apply.load_style で見る。
+    print("※ この検査は 1920x1080（横）のみ。縦は pipeline/style_apply.py で検算する")
     print(("クリーン" if total == 0 else f"違反 {total} 件")
           + (f" / 申し送り {warn} 件" if warn else ""))
     return 0 if total == 0 else 1
