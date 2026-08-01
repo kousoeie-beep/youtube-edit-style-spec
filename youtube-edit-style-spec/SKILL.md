@@ -9,11 +9,9 @@ description: 素材（動画/音声/台本/画像）を渡すだけで基準プ�
 
 一次指示書は **auto-youtube-edit-agent 仕様書**。実行前に必ずクローンして全文読むこと：
 
-**同梱済み**（2026-07-31 統合。以前は別リポジトリだった）:
-
-```
-../auto-youtube-edit-agent/auto_youtube_edit_agent.md
-# カット基準 / 字幕規則 / テロップenum / 音声処理 / サムネ5案 / 品質チェック / edit_log義務
+```bash
+git clone https://github.com/zettai-code/auto-youtube-edit-agent.git <scratchpad>/auto-youtube-edit-agent
+# 読む: auto_youtube_edit_agent.md（カット基準/字幕規則/テロップenum/音声処理/サムネ5案/品質チェック/edit_log義務）
 ```
 
 本スキルは仕様書に、①このMacの環境知見 ②字幕品質v2手順 ③納品運用ルール を上書き追加するもの。矛盾したら本スキルが優先（ローカル環境の実測に基づくため）。
@@ -38,6 +36,7 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 
 | 領域 | leaf | 扱う内容 |
 |---|---|---|
+| APIキー | [api-keys.md](api-keys.md) | `.env` の読み込み・非出力規律、キー種別ごとの解禁条件、APIパス実証で確定した制約 |
 | 実行環境 | [environment-notes.md](environment-notes.md) | このMac固有のffmpeg/Pillow制約、強調テロップ視認性の確定数値、被りQC・被り予防の設計規則 |
 | 納品運用 | [delivery-ops.md](delivery-ops.md) | nice値降格・scratchpad揮発性・作業ディレクトリ・納品先、品質実績（参考基準）、**このスキル自体を並列編集する際の注意** |
 
@@ -61,7 +60,7 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 
 1. [正本](#正本)の仕様書を読む
 2. 実行環境の制約を把握: [environment-notes.md](environment-notes.md)
-3. APIキーの有無を確認（値は絶対に出力しない。運用規律は公開版に含めない）
+3. APIキーの有無を確認: [api-keys.md](api-keys.md)
 4. 「〇〇風で」の指定があれば [style-learning/registry.md](style-learning/registry.md) で登録済みスタイルを確認し、無ければ [style-learning/index.md](style-learning/index.md) から学習フローに入る。**どのスタイルを使うか迷う場合は [styles/_index.md](styles/_index.md) の横断比較表**（cuts/LUFS/LRA/無音方針/テロップ密度の一覧。**無音率が選定の第一軸**）
 5. 字幕生成: [captions-quality-v2.md](captions-quality-v2.md)
 6. 音響設計: [audio-pipeline.md](audio-pipeline.md)
@@ -70,7 +69,7 @@ Fable(PM)=計画・検収・コミット／Sonnet(Executor)=実行（`Agent`ツ�
 
 ## 最重要ハードルール（詳細は各leaf）
 
-- **APIキーの値をログ・レポート・チャットに出力しない**（運用規律は公開版に含めない）
+- **APIキーの値をログ・レポート・チャットに出力しない**（[api-keys.md](api-keys.md)）
 - **QCゲート通過後も必ずフレームを目視すること。ツールの緑信号は目視の代替にならない**（[qc-gates.md](qc-gates.md)）
 - **推測で字幕を作らない**。全パス不一致＋低確信語は省略し記録する（[captions-quality-v2.md](captions-quality-v2.md)）
 - **scratchpadは数時間で消える**。作業ディレクトリは `~/Documents/編集作業/<案件名>/` に置く（[delivery-ops.md](delivery-ops.md)）

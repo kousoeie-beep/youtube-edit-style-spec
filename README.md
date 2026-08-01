@@ -58,6 +58,7 @@ auto-youtube-edit-agent/
   auto_youtube_edit_agent.md  ← 【編集の一次指示書・678行】カット基準/字幕規則/
                                  テロップenum/音声処理/サムネ5案/品質チェック/edit_log義務
 youtube-edit-style-spec/
+  verify/preflight.py         ← **着手前に必ず通す**（環境・回転・音量を機械で検査）
   SKILL.md                    ← 実行スキル（一次指示書に環境知見・字幕品質v2・納品ルールを上書き）
   styles/*.yaml               ← スタイル定義15本。チューニング対象はここ
   styles/lint.py              ← 静的検査26項目。周回を閉じる前のゲート
@@ -72,7 +73,8 @@ youtube-edit-style-spec/
 overlap_qc/
   overlap_qc.py               ← 被りQCゲート本体
   test_overlap_qc.py          ← 回帰テスト（ツールを触ったら流す）
-TASK_R12_remeasure.md         ← 次にやることの作業指示
+TASK_NEXT.md                  ← **次にやること（実素材の欠陥3件・縦対応）**
+TASK_R12_remeasure.md         ← pixel判定の測り直し
 ```
 
 ### 「完成していない」の意味
@@ -169,7 +171,23 @@ uv run --with pyyaml python3 styles/lint.py
 
 ## 9. 次にやること（この順で）
 
-### ① [`TASK_R12_remeasure.md`](TASK_R12_remeasure.md) — pixel判定の測り直し【最優先】
+### ⓪ 着手前に必ず `verify/preflight.py` を通す
+
+```bash
+uv run --with pillow python3 youtube-edit-style-spec/verify/preflight.py <素材>
+```
+
+**飛ばすと、すでに文書化されている落とし穴を踏みます。**
+2026-08-01 の実行では `environment-notes.md` に書いてあった制約を3件とも踏み、
+40分を無駄にしました。**散文の知見は読まれないので機械で止めます。**
+
+### ★ [`TASK_NEXT.md`](TASK_NEXT.md) — 実素材で残った欠陥3件と縦対応【最優先】
+
+2026-08-01 に**初めて実素材を通しました**（iPhone縦撮り 2分14秒・完走）。
+そこで出た欠陥（ラウドネス2.3LU不足 / ASR誤認識 / 縦素材にスタイル定義が使えない）と、
+速度の解決（ASR **7.0倍**）をまとめてあります。
+
+### ① [`TASK_R12_remeasure.md`](TASK_R12_remeasure.md) — pixel判定の測り直し
 
 `overlap_qc.py` に**アルファ切り出しのオフセット漏れ**があり、2026-07-31 に修正しました。
 **それ以前の11周は、狂った `pixel_collision` を根拠に実害を判断しています。**
