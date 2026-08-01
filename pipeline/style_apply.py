@@ -363,6 +363,118 @@ def check_clearance(roles):
 
 
 # ── 公開API ────────────────────────────────────────────
+def _move(r, dx, dy):
+    """役を動かす。**rect_shadow も必ず一緒に動かす**（派生値の追随）。"""
+    for k in ("rect", "rect_shadow"):
+        if r.get(k):
+            x0, y0, x1, y1 = r[k]
+            r[k] = (x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+    r["center"] = (r["center"][0] + dx, r["center"][1] + dy)
+
+
+def _shrink(r, dw):
+    """箱を左右 dw/2 ずつ縮める。**折返し幅も一緒に縮める**（でないと文字がはみ出す）。"""
+    for k in ("rect", "rect_shadow"):
+        if r.get(k):
+            x0, y0, x1, y1 = r[k]
+            r[k] = (x0 + dw / 2, y0, x1 - dw / 2, y1)
+    if r.get("size"):
+        r["size"] = (r["size"][0] - dw, r["size"][1])
+    if isinstance(r.get("max_width_px"), (int, float)):
+        r["max_width_px"] = r["max_width_px"] - dw
+
+
+def fit_clearance(roles, cw, ch, limit_frac=0.03):
+    """近接しすぎた役どうしを、不足ぶんだけ押し離す。
+
+    2026-08-01: 4辺だけ直したら、残った不成立は全部すきまだった。
+    辺と同じで、必要な移動量は小さい（実測 11.3px と 15.1px）。
+    押し離した結果が4辺を割らないことを、その場で確かめてから確定する。
+    """
+    moved = []
+    for _ in range(3):
+        ng = check_clearance(roles)
+        if not ng:
+            break
+        by = {r["role"]: r for r in roles}
+        done = False
+        for a_, b_, gap, kind in ng:
+            a, b = by.get(a_), by.get(b_)
+            if not a or not b:
+                continue
+            need = MIN_CLEARANCE - gap
+            if need > cw * limit_frac:
+                continue
+            ra, rb = a["rect_shadow"], b["rect_shadow"]
+            gx = max(ra[0], rb[0]) - min(ra[2], rb[2])
+            gy = max(ra[1], rb[1]) - min(ra[3], rb[3])
+            ax = gx >= gy                       # 今いちばん開いている軸で離す
+            d = need / 2
+            sgn = 1 if (ra[0] if ax else ra[1]) > (rb[0] if ax else rb[1]) else -1
+            for r, k in ((a, sgn), (b, -sgn)):
+                _move(r, d * k if ax else 0, 0 if ax else d * k)
+            if check_four_edges([a, b], cw, ch):     # 4辺を割ったら戻す
+                for r, k in ((a, sgn), (b, -sgn)):
+                    _move(r, -d * k if ax else 0, 0 if ax else -d * k)
+                continue
+            a["notes"].append(f"{b_} とのすきま確保のため {d:.1f}px 離した")
+            b["notes"].append(f"{a_} とのすきま確保のため {d:.1f}px 離した")
+            moved.append((a_, b_, round(need, 1)))
+            done = True
+        if not done:
+            break
+    return moved
+
+
+def fit_edges(roles, cw, ch, limit_frac=0.03):
+    """4辺を割った役を、**不足ぶんだけ内側へ寄せる**。
+
+    正規化 centerX/centerY 由来の「縁までの距離」はキャンバス比で、px系は
+    s = cw/1920 比で動く。影(3/12px)と要求(16px)は定数なので、
+    **余裕は比例しない**。1920x1080 で生余裕50px未満だった役は縦で必ず割る。
+
+    2026-08-01: これを「構造的に回避できない」と報告したが、**動かす量を測っていなかった**。
+    実測すると最大12.0px（1080px幅の1.11%）、中央値6.9px。比が保存されないのは
+    事実だが、そこから「不可避」は導けない。測ってから結論を出す。
+
+    寄せる量が limit_frac を超える場合は本当の設計衝突なので寄せない。
+    寄せた結果は notes に残す（黙って動かさない）。
+    """
+    moved = []
+    for r in roles:
+        if not r["resolved"] or r["opaque_fullscreen"] or r["edge_bleed"]:
+            continue
+        rect = r.get("rect")
+        if not rect:
+            continue
+        lt, rb = (0, 0) if r.get("no_shadow") else (SHADOW_LT, SHADOW_RB)
+        dx = dy = 0.0
+        need_l = MIN_MARGIN - (rect[0] - lt)
+        need_r = MIN_MARGIN - (cw - (rect[2] + rb))
+        need_t = MIN_MARGIN - (rect[1] - lt)
+        need_b = MIN_MARGIN - (ch - (rect[3] + rb))
+        if need_l > 0 and need_r > 0:
+            # 両側が同時に足りない＝箱が広すぎる。寄せても直らないので縮める
+            dw = need_l + need_r
+            if dw <= cw * limit_frac:
+                _shrink(r, dw)
+                r["notes"].append(f"左右とも足りないため箱を {dw:.1f}px 縮めた")
+                moved.append((r["role"], f"-{dw:.1f}px幅", 0))
+            continue
+        if need_l > 0: dx = need_l
+        elif need_r > 0: dx = -need_r
+        if need_t > 0 and need_b <= 0: dy = need_t
+        elif need_b > 0 and need_t <= 0: dy = -need_b
+        if not dx and not dy:
+            continue
+        if abs(dx) > cw * limit_frac or abs(dy) > ch * limit_frac:
+            continue                      # 寄せて済む量ではない＝本当の設計衝突
+        _move(r, dx, dy)
+        r["notes"].append(f"4辺を満たすため内側へ {dx:+.1f},{dy:+.1f}px 寄せた")
+        moved.append((r["role"], round(dx, 1), round(dy, 1)))
+    return moved
+
+
 def resolve_style(style_id, canvas_w, canvas_h, variant=None):
     """検算結果つきの完全レポートを返す（判定表はこれを使う）。"""
     doc = load_yaml(style_id)
@@ -382,6 +494,14 @@ def resolve_style(style_id, canvas_w, canvas_h, variant=None):
                         if any(r["is_caption"] and r["resolved"] for r in build(v))),
                        vs[0])
     roles = build(variant)
+
+    # 縦変換などでキャンバスが変わると、影と要求16pxが定数のぶんだけ余裕が足りなくなる。
+    # 足りないぶんだけ内側へ寄せてから検算する（寄せた事実は notes と moved に残る）。
+    moved = []
+    if canvas_w != REF_W:
+        moved = fit_edges(roles, canvas_w, canvas_h)
+        moved += fit_clearance(roles, canvas_w, canvas_h)
+        moved += fit_edges(roles, canvas_w, canvas_h)   # 押し離した結果を再検算
 
     edges = check_four_edges(roles, canvas_w, canvas_h)
     gaps = check_clearance(roles)
@@ -418,7 +538,7 @@ def resolve_style(style_id, canvas_w, canvas_h, variant=None):
     return {"style_id": style_id, "aspect_declared": declared_aspect(doc),
             "canvas": (canvas_w, canvas_h), "orientation": orientation,
             "scale": s, "variant": variant, "variants": vs,
-            "roles": roles, "caption_role": cap,
+            "roles": roles, "caption_role": cap, "moved": moved,
             "ng_edges": edges, "ng_gaps": gaps, "dup_z_order": dup_z,
             "verdict": verdict, "why": why,
             "unresolved": [(r["role"], r["reason"])

@@ -957,6 +957,47 @@ def check_four_edges():
 
 
 
+def check_caption_capacity():
+    """字幕が実際に何字入るか。**幾何が通っても、字数が足りなければ使えない。**
+
+    2026-08-01: 縦変換の補正を入れて「13/13成立」になった直後に測ったところ、
+    business_talk の縦は 1行4.5字・総9.1字だった。4辺もすきまも通っている。
+    **幾何の検算は「読めるか」を一切見ていない。**
+
+    ただし business_talk は横でも8.1字/行で、これはサイドバーとネームプレートを
+    同時に出す学習元の設計そのもの。忠実な再現を違反にはできないので申し送りにする。
+    数を出さずに「成立」とだけ言わないための検査。
+    """
+    out = []
+    for f in sorted(glob.glob(os.path.join(STYLES, "*.yaml"))):
+        name, layers, _ = _layers(f)
+        for l in layers:
+            if l.get("role") not in ("caption", "dialogue_caption", "speech_caption",
+                                     "quote_caption", "bilingual_caption", "base_caption"):
+                continue
+            if l.get("opaque_fullscreen") or l.get("layer_kind") == "video":
+                continue
+            mw = l.get("max_width_px")
+            mw = mw if isinstance(mw, (int, float)) else None
+            if not mw:
+                sz = l.get("size")
+                mw = sz.get("width") if isinstance(sz, dict) else None
+            if not mw:
+                continue
+            font = _font_of(l)
+            ml = l.get("max_lines") if isinstance(l.get("max_lines"), int) else 1
+            per = mw / font
+            tot = per * ml
+            # 縦(1080x1920)は幅が0.5625倍になる一方、フォントは可読性下限72で
+            # 止まるので、**字数はさらに減る**。「同じ字数」は事実と違う。
+            per_p = (mw * 0.5625) / max(72, round(font * 0.5625))
+            tot_p = per_p * ml
+            if tot < 14 or tot_p < 14:
+                out.append(f"  {name}/{l['role']}: 横 1行{per:.1f}字×{ml}行=総{tot:.1f}字 / "
+                           f"縦 1行{per_p:.1f}字×{ml}行=**総{tot_p:.1f}字**")
+    return out
+
+
 def check_max_chars_total():
     """`max_lines >= 2` のroleに `max_chars_total`（イベント全体の総字数上限）があるか。
 
@@ -1138,6 +1179,7 @@ WARNINGS = [
     ("二段roleが行数を言語ごとに宣言していない", check_two_tier_roles_declare_per_language),
     ("別roleの centerY を旧値で引用している（派生値の未追随）",
      check_cross_role_centery_references),
+    ("字幕の実容量が総14字未満（幾何は通っても読めない）", check_caption_capacity),
 ]
 
 
