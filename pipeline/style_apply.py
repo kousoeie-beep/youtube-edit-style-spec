@@ -696,6 +696,11 @@ def _balanced(units, width_of, max_width, k):
         ws = [width_of(l) for l in lines]
         if max(ws) > max_width:
             continue
+        # 【2026-08-01】行頭の禁則を「あとで前行へ送る」で直していたが、
+        #  その1文字（font92なら約45px）が幅を超え、実インクが画面外へ出ていた。
+        #  documentary_cinematic で12行。**あとで直すのではなく最初から選ばない。**
+        if any(lines[i] and lines[i][0] in KINSOKU_HEAD for i in range(1, k)):
+            continue
         pu = sum(1 for i in range(k - 1) if lines[i] and lines[i][-1] in PUNCT)
         cands.append((max(ws), pu, lines))
     if not cands:
@@ -707,8 +712,32 @@ def _balanced(units, width_of, max_width, k):
     return near[0][2]
 
 
+def _split_wide(units, width_of, max_width):
+    """幅を超える文節を、先に字で割っておく。
+
+    2026-08-01: 実インクで測って見つけた欠陥。`_greedy` の分割ループは
+    `lines.append(cur); cur = u` の**後**にしか回らないので、
+    最初（と最後）の過大な文節がそのまま行になっていた。
+    documentary_cinematic（幅620px・font92）は文節「これはですね、」が668pxで、
+    33行が画面左外（−3.0px）へはみ出していた。**数値検査は全部通っていた。**
+    """
+    out = []
+    for u in units:
+        if width_of(u) <= max_width or len(u) <= 1:
+            out.append(u); continue
+        cur = u
+        while width_of(cur) > max_width and len(cur) > 1:
+            k = len(cur)
+            while k > 1 and width_of(cur[:k]) > max_width:
+                k -= 1
+            out.append(cur[:k]); cur = cur[k:]
+        if cur:
+            out.append(cur)
+    return out
+
+
 def wrap_text(text, width_of, max_width, max_lines=2):
-    units = bunsetsu(text)
+    units = _split_wide(bunsetsu(text), width_of, max_width)
     lines = None
     for k in range(1, max(1, max_lines) + 1):
         cand = _balanced(units, width_of, max_width, k)
@@ -717,8 +746,11 @@ def wrap_text(text, width_of, max_width, max_lines=2):
     if lines is None:
         lines = _greedy(units, width_of, max_width)
     # 禁則: 行頭に来てしまった字は前の行の末尾へ送る（幅は1字分まで超過を許容）
+    # _greedy に落ちたときの後始末。**幅を超えるなら動かさない**
+    # （行頭禁則より画面外の方が重い。1文字ぶんの超過許容が16px余裕を食い潰す）
     for i in range(1, len(lines)):
-        while lines[i] and lines[i][0] in KINSOKU_HEAD and lines[i-1]:
+        while (lines[i] and lines[i][0] in KINSOKU_HEAD and lines[i-1]
+               and width_of(lines[i-1] + lines[i][0]) <= max_width):
             lines[i-1] += lines[i][0]; lines[i] = lines[i][1:]
     return [l for l in lines if l]
 
