@@ -370,6 +370,11 @@ telop_layers:
     entrance: hard_cut               # 未計測（推定。動画開始と同時に完成形で表示と仮定、fade_sec=0）
     exit: hard_cut                    # 未計測（推定）
   - role: motion_graphic           # 【2026-07-26 スキーマ修正で追加】C1(C1): 自作
+    # 【2026-08-01 R12】`size` だけあって中身が無く、11周ぶん実装者が値を発明する余地を残していた。
+    # **学習元の素材は容量開放で消えており、再実測には出典動画の再取得が要る**（style-learning/_sources.md）。
+    # 自作モーショングラフィックス＝**完成した映像素材**。文中の文字はその素材が持っており、
+    # このパイプラインが文字組みをするわけではない（チャンネルロゴと同じ扱い）。
+    text_content: none
     # モーショングラフィックス。タイトル演出（例「GEARS 2005」）、赤マーカー付き世界地図など、
     # 証拠映像と資料映像の間に挿入されるオリジナル制作のインフォグラフィック。実測
     mutually_exclusive_with: [statement_card, endcredit]   # 【2026-07-27 R4】全画面カードは同時に2枚出せない。lintが交差100%として検出
@@ -394,6 +399,16 @@ telop_layers:
     entrance: hard_cut               # 未計測（推定、fade_sec=0仮定）
     exit: hard_cut                    # 未計測（推定）
   - role: statement_card           # 【2026-07-26 スキーマ修正で追加】C1(C1): 全画面の
+    # 【2026-08-01 R12】`size` だけあって中身が無く、11周ぶん実装者が値を発明する余地を残していた。
+    # **学習元の素材は容量開放で消えており、再実測には出典動画の再取得が要る**（style-learning/_sources.md）。
+    # 全画面カードなので `size` は画面そのもので、中身の手がかりを持たない。
+    # ただし **lint も style_apply も既にこの role に font 92 を暗黙適用している**。
+    # 書き出すのは発明ではなく「いま起きていることを見えるようにする」こと。
+    font_px: 92   # chaenデフォルト。【要実測】
+    stroke_px: 12
+    max_width_px: 1856   # 1920 − 安全余白16×2 − フチ12×2
+    max_lines: 1
+    overflow_policy: split_event   # 1行制約は折返し器を止めない。超過はイベント分割
     # 白文字センター配置による断定的なステートメント（例「Nothing happened.」）。実測
     mutually_exclusive_with: [motion_graphic, endcredit]   # 【2026-07-27 R4】全画面カードは同時に2枚出せない。lintが交差100%として検出
     variant: variant_narrator_only   # 【2026-07-27 R10・X3】**variant が9role中0件だった**。同じファイルの散文は
@@ -422,6 +437,15 @@ telop_layers:
       # **要素自身の性質**として宣言する（フレームを見れば検証できる）。
       # 実装者への意味: この要素の下は描画を省略してよい
   - role: endcredit                # 【2026-07-26 スキーマ修正で追加】C1(C1): 映画式
+    # 【2026-08-01 R12】`size` だけあって中身が無く、11周ぶん実装者が値を発明する余地を残していた。
+    # **学習元の素材は容量開放で消えており、再実測には出典動画の再取得が要る**（style-learning/_sources.md）。
+    # 全画面カードなので `size` は画面そのもので、中身の手がかりを持たない。
+    # ただし **lint も style_apply も既にこの role に font 92 を暗黙適用している**。
+    # 書き出すのは発明ではなく「いま起きていることを見えるようにする」こと。
+    font_px: 92   # chaenデフォルト。【要実測】
+    stroke_px: 12
+    max_width_px: 1856   # 1920 − 安全余白16×2 − フチ12×2
+    max_lines: 7
     # エンドクレジットカード。濃紺背景にNARRATOR/PRODUCERS/MOTION GRAPHICS/MUSIC/WRITERS/
     # EDITORS/EXECUTIVE PRODUCERSの役割別クレジットを列挙。他13スタイルに無い固有の締め方。
     # packaging.endcardの記述をtelop_layers側にも反映（実測）

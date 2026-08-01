@@ -323,6 +323,15 @@ telop_layers:
     entrance: hard_cut            # 未計測（推定）
     exit: hard_cut                 # 未計測（推定）
   - role: quote_card             # 【2026-07-27 role分離修正】旧: role: caption。A1内部で
+    # 【2026-08-01 R12】`size` だけあって中身が無く、11周ぶん実装者が値を発明する余地を残していた。
+    # **学習元の素材は容量開放で消えており、再実測には出典動画の再取得が要る**（style-learning/_sources.md）。
+    # 全画面カードなので `size` は画面そのもので、中身の手がかりを持たない。
+    # ただし **lint も style_apply も既にこの role に font 92 を暗黙適用している**。
+    # 書き出すのは発明ではなく「いま起きていることを見えるようにする」こと。
+    font_px: 92   # chaenデフォルト。【要実測】
+    stroke_px: 12
+    max_width_px: 1512   # 箱幅 1536 − フチ12×2。**全画面カードではない**（size.width=1536）
+    max_lines: 3
     # 「スポンサー枠埋め込み」と同一role名を共有し、機能の異なる2装置が1roleに相乗りしていた
     # （監査3・documentary_cinematic §b-3で指摘）。quote_cardへ分離。
     # 【変種: A1のみ】引用カード（紙テクスチャ背景+白文字センター配置）。実測
