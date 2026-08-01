@@ -34,7 +34,7 @@ def preflight(src):
     filters = sh(["ffmpeg","-hide_banner","-filters"]).stdout
     has = lambda n: any(len(l.split())>1 and l.split()[1]==n for l in filters.splitlines())
     enc = sh(["ffmpeg","-hide_banner","-encoders"]).stdout
-    return {"W":W,"H":H,"rot":rot,"dur":dur,"I":I,
+    return {"W":W,"H":H,"rot":rot,"dur":dur,"I":I,"created":_creation_time(src),
             "portrait":H>W, "drawtext":has("drawtext"),
             "hwenc":"h264_videotoolbox" in enc}
 
@@ -477,6 +477,56 @@ def keyword_items(caps, topics, dur):
     return sorted(out, key=lambda o: o["start"])
 
 
+def timestamp_items(env, topics, dur):
+    """撮影時刻のピルに出す項目。
+
+    japan_vlog の timestamp_pill は「半透明グレーの小型ピルで時刻を提示（AM:9:30）。
+    朝パートで断続的に出現」。**時刻は素材のメタデータから導ける**（発明しない）。
+    出すのは話題の頭だけにする（常時出すと実物と違う＝「断続的」の再現にならない）。
+    """
+    base = env.get("created")
+    if not base:
+        return []
+    import datetime
+    out, last = [], None
+    for it in topics:
+        t = base + datetime.timedelta(seconds=it["start"])
+        ap = "AM" if t.hour < 12 else "PM"
+        label = f"{ap}:{t.hour % 12 or 12}:{t.minute:02d}"
+        if label == last:
+            continue          # 【2026-08-02】分が変わっていないのに同じ時刻を出さない
+        last = label
+        out.append({"text": label,
+                    "start": it["start"], "end": min(dur, it["start"] + 3.0)})
+    return out
+
+
+def shape_items(style, role_name, dur):
+    """図形だけの役（レターボックスの黒帯など）を全編に敷く指示を返す。
+
+    japan_vlog の letterbox は「2.35:1シネマ枠の上下黒帯」。
+    文字を持たないので**矩形をそのまま塗る**。導出でも発明でもなく幾何そのもの。
+    """
+    rs = [r for r in style["roles"] if r["role"] == role_name and r["resolved"]]
+    return [{"box": tuple(round(v) for v in r["rect"]), "start": 0.0, "end": dur}
+            for r in rs]
+
+
+def _creation_time(src):
+    """素材の撮影時刻。Apple の quicktime タグを優先（ローカル時刻で入っている）。"""
+    import datetime
+    for key in ("com.apple.quicktime.creationdate", "creation_time"):
+        r = sh(["ffprobe","-v","error","-show_entries",f"format_tags={key}",
+                "-of","default=nw=1:nk=1", src])
+        v = (r.stdout or "").strip()
+        if v:
+            try:
+                return datetime.datetime.fromisoformat(v.replace("Z", "+00:00"))
+            except ValueError:
+                pass
+    return None
+
+
 def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
@@ -489,7 +539,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
         sys.exit("NotoSansJP-Bold.ttf が見つからない。~/Library/Fonts/ に入れてください")
 
     # ── スタイル定義を使う経路。失敗したら既定レイアウトに落ちる（無音で落ちない）
-    plan = None; bar = []; badge = None
+    plan = None; bar = []; badge = None; shapes = []
     if style_id:
         try:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -516,6 +566,28 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
                 log(f"  論点見出し（{bar_role}）{len(items)}件（話題の切れ目＝質問文）")
             elif items:
                 log("  ⚠ このスタイルに見出し系の役が無いので論点見出しは出さない")
+            # 撮影時刻ピル（メタデータから導出）
+            if any(x["role"] == "timestamp_pill" and x["resolved"] and x.get("font_px")
+                   for x in st["roles"]):
+                ts = timestamp_items(env, items, env["dur"])
+                if ts:
+                    bar += SA.render_role(st, "timestamp_pill", ts, W, H)
+                    log(f"  撮影時刻ピル {len(ts)}件（{env['created']:%Y-%m-%d %H:%M} 起点）")
+                else:
+                    log("  ⚠ timestamp_pill はあるが素材に撮影時刻が無いので出さない")
+            # 質問カード（質問検出から）
+            if any(x["role"] == "question_card" and x["resolved"] and x.get("font_px")
+                   for x in st["roles"]):
+                qc = [{"text": i["text"], "start": i["start"],
+                       "end": min(env["dur"], i["start"] + 4.0)} for i in items]
+                if qc:
+                    bar += SA.render_role(st, "question_card", qc, W, H)
+                    log(f"  質問カード {len(qc)}件")
+            # レターボックス（図形。導出でも発明でもなく幾何そのもの）
+            for rn in ("letterbox", "letterbox_top", "letterbox_bottom"):
+                shapes += shape_items(st, rn, env["dur"])
+            if shapes:
+                log(f"  レターボックス {len(shapes)}本（全編）")
             # 強調テロップ。選定規則は environment-notes L17 に既にあった（実装が無かった）
             KW_ROLES = ("keyword", "positive_keyword", "shock_keyword", "highlight_marker")
             kws = keyword_items(caps, items, env["dur"]) if items else []
@@ -595,6 +667,8 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
     for key in uniq:
         ci, bi = key
         im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
+        for shp in shapes:              # レターボックスは全編・全PNG
+            d.rectangle(list(shp["box"]), fill=(0, 0, 0, 255))
         if badge:                       # 常駐なので全PNGに乗せる
             b = Image.open(badge["path"]).convert("RGBA")
             x0, y0, x1, y1 = badge["box"]

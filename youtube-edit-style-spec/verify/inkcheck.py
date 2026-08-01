@@ -63,6 +63,13 @@ for sid in SA.all_style_ids():
             bb = d2._image.getbbox()      # 実インクの外形（alpha>0）
             if not bb:
                 continue
+            # 【2026-08-02】実インクだけ見ると capseq より甘い判定になる。
+            #  capseq は計画の bbox（送り幅ベース＝保守的）で弾いており、
+            #  ai_biz_pitch の base_caption 4行は「実インク22px / 計画14px」で
+            #  inkcheck だけ通っていた。**実際に弾く側に合わせる。**
+            pb = p["bbox"]
+            bb = (min(bb[0], pb[0]), min(bb[1], pb[1]),
+                  max(bb[2], pb[2]), max(bb[3], pb[3]))
             m = {"左": bb[0] - SHADOW_LT, "右": cw - (bb[2] + SHADOW_RB),
                  "上": bb[1] - SHADOW_LT, "下": ch - (bb[3] + SHADOW_RB)}
             for k in m:

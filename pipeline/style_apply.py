@@ -851,6 +851,15 @@ def render_plan(style, caps, canvas_w, canvas_h, speaker_kinds=False):
         ml = role["max_lines"] or 2
         mw = role.get("max_width_px") or (role["size"][0]
                                           - (role.get("padding_px") or 0 + st) * 2)
+        # 【2026-08-02】折返し幅が「その中心位置で16px余裕を残せる幅」を超えていた。
+        #  ai_biz_pitch 縦の base_caption は幅1035・ほぼ全幅で、実際に描くと右14.0px。
+        #  **検査で弾くのではなく、幅の側で保証する。** 中心から左右それぞれの
+        #  余地（影と16pxを引いた分）の2倍を上限にする。
+        cx0 = role["center"][0]
+        lim = 2 * min(cx0 - (MIN_MARGIN + SHADOW_LT),
+                      canvas_w - cx0 - (MIN_MARGIN + SHADOW_RB))
+        if lim > 0 and mw > lim:
+            mw = int(lim)
         wof, draw, font = _measurer(fp, st)
         return {"role": role, "font_px": fp, "stroke_px": st, "max_lines": ml,
                 "max_w": mw, "cx": role["center"][0], "cy": role["center"][1],
