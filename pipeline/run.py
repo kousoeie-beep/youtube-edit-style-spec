@@ -527,6 +527,78 @@ def _creation_time(src):
     return None
 
 
+# ── 5.7 自動カット（無音除去）
+#  一次指示書 §3「0.45秒以上の無音。ただし感情、考える間、オチ前の間は残す」。
+#
+#  2026-08-02: 最初は音量（silencedetect / フレームRMS）で無音を探したが、
+#  **どのしきい値でも語と58〜75%重なった**。日本語は無声子音や語中の間で
+#  エネルギーが落ちるので、低エネルギー区間は「発話の内側」に多い。
+#  信号の選び方が誤っていた。**語と語の間隙**で測るのが正しい。
+FILL_KEEP = 0.25      # 間を全部詰めると詰まって聞こえる。これだけ残す
+CUT_MIN   = 0.45      # 一次指示書の閾値
+
+def find_cuts(words, env, wd, caps=None):
+    import soundfile as sf, numpy as np
+    y, sr = sf.read(f"{wd}/a16k.wav")
+    y = y if y.ndim == 1 else y.mean(1)
+    dur = env["dur"]
+    lvl = 20*np.log10(np.sqrt((y**2).mean())+1e-9)     # 素材全体の平均音量
+
+    def rms(a, b):
+        seg = y[int(a*sr):int(b*sr)]
+        return 20*np.log10(np.sqrt((seg**2).mean())+1e-9) if len(seg) else -99
+
+    ws = sorted(words, key=lambda w: w["start"])
+    gaps, prev = [], 0.0
+    for w in ws:
+        if w["start"] - prev >= CUT_MIN:
+            gaps.append((prev, w["start"]))
+        prev = max(prev, w["end"])
+    if dur - prev >= CUT_MIN:
+        gaps.append((prev, dur))
+
+    qstarts = [c["start"] for c in (caps or []) if c.get("kind") == "question"]
+    cuts = []
+    for a, b in gaps:
+        r = rms(a, b)
+        if r > lvl + 6:
+            continue          # 平均より大きい＝笑い声・反応・再生音。**残す**
+        if any(0 <= q - b <= 0.5 for q in qstarts):
+            continue          # 質問の直前は「考える間」。残す
+        room = (b - a) - FILL_KEEP
+        if room < 0.2:
+            continue
+        st = a + FILL_KEEP / 2
+        cuts.append({"start": round(st, 3), "end": round(st + room, 3),
+                     "reason": "long_silence", "risk": "low",
+                     "rms_db": round(float(r), 1)})
+    # 【2026-08-02】境界をフレームに合わせる。environment-notes が
+    #  「多分割concat＋fps量子化のタイムラインドリフトで90秒地点で最大+0.8sずれる」と
+    #  警告している。**丸め方を揃えれば、そもそもずれない。**
+    FPS = 30
+    for c in cuts:
+        c["start"] = round(round(c["start"] * FPS) / FPS, 4)
+        c["end"] = round(round(c["end"] * FPS) / FPS, 4)
+    cuts = [c for c in cuts if c["end"] - c["start"] >= 1.0 / FPS]
+    json.dump(cuts, open(f"{wd}/cuts.json", "w"), ensure_ascii=False, indent=1)
+    rm = sum(c["end"] - c["start"] for c in cuts)
+    log(f"  カット候補 {len(cuts)}件 / 除去 {rm:.1f}秒（{100*rm/dur:.1f}%）→ 尺 {dur-rm:.1f}秒")
+    return cuts
+
+
+def remap(t, cuts):
+    """元の時刻を、カット後の時刻へ写す。カット中の時刻はカット開始点へ寄せる。"""
+    off = 0.0
+    for c in cuts:
+        if t >= c["end"]:
+            off += c["end"] - c["start"]
+        elif t > c["start"]:
+            return round(c["start"] - off, 3)
+        else:
+            break
+    return round(t - off, 3)
+
+
 def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
@@ -695,7 +767,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
     return out, len(ng)
 
 # ── 6. レンダリング（loudnorm 2パス・HWエンコード）
-def render(src, seq, env, outp, wd):
+def render(src, seq, env, outp, wd, cuts=None):
     m = sh(["ffmpeg","-hide_banner","-i",src,"-af",
             "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json","-f","null","-"]).stderr
     j = json.loads(m[m.rfind("{"):m.rfind("}")+1])
@@ -706,13 +778,46 @@ def render(src, seq, env, outp, wd):
           "aresample=192000,alimiter=level=false:limit=-2.5dB,aresample=48000")
     vcodec = ["-c:v","h264_videotoolbox","-b:v","10M"] if env["hwenc"] else \
              ["-c:v","libx264","-preset","medium","-crf","20"]
+    # カットは trim/atrim + concat で行う。
+    # environment-notes「ffmpeg 8.0.1 の select/aselect は不発」に従い select を使わない。
+    if cuts:
+        keep, prev = [], 0.0
+        for c in cuts:
+            if c["start"] > prev: keep.append((prev, c["start"]))
+            prev = c["end"]
+        if env["dur"] > prev: keep.append((prev, env["dur"]))
+        pre = "".join(
+            f"[0:v]trim=start={a}:end={b},setpts=PTS-STARTPTS[v{i}];"
+            f"[0:a]atrim=start={a}:end={b},asetpts=PTS-STARTPTS[a{i}];"
+            for i, (a, b) in enumerate(keep))
+        cc = "".join(f"[v{i}][a{i}]" for i in range(len(keep)))
+        base = (pre + f"{cc}concat=n={len(keep)}:v=1:a=1[cv][ca];"
+                "[cv]eq=brightness=0.06:contrast=1.12:saturation=1.05,unsharp=5:5:0.4[b];"
+                "[b][1:v]overlay=0:0:format=auto[v]")
+        # 【2026-08-02】filter_complex の出力ラベルに -af は当てられない
+        #  （同じストリームに -af と -filter_complex は併用できない）。
+        #  カットするときは音声処理もグラフの中に入れる。
+        base += f";[ca]{af}[aout]"
+        amap = ["-map","[aout]"]; afopt = []
+        log(f"  カット適用: {len(keep)}区間を連結（{len(cuts)}箇所を除去）")
+    else:
+        base = ("[0:v]eq=brightness=0.06:contrast=1.12:saturation=1.05,"
+                "unsharp=5:5:0.4[b];[b][1:v]overlay=0:0:format=auto[v]")
+        amap = ["-map","0:a"]; afopt = ["-af", af]
     r = sh(["ffmpeg","-hide_banner","-v","warning","-y","-i",src,
             "-framerate","30","-i",f"{seq}/%05d.png",
-            "-filter_complex","[0:v]eq=brightness=0.06:contrast=1.12:saturation=1.05,"
-                              "unsharp=5:5:0.4[b];[b][1:v]overlay=0:0:format=auto[v]",
-            "-map","[v]","-map","0:a","-af",af,
+            "-filter_complex", base,
+            "-map","[v]",*amap,*afopt,
             *vcodec,"-pix_fmt","yuv420p","-r","30",
             "-c:a","aac","-b:a","192k","-movflags","+faststart",outp])
+    # 【2026-08-02】戻り値を一度も見ておらず、**失敗しても「完成」と表示していた**。
+    #  v14 は final.mp4 が生成されないまま「完成: ...」「4辺検算NG 0件」と出た。
+    #  出力が無い／壊れているのに成功と報告するのが、この工程で一番重い欠陥。
+    if r.returncode != 0 or not os.path.exists(outp) or os.path.getsize(outp) < 1024:
+        log("  ✗ レンダリング失敗:")
+        for ln in (r.stderr or "").strip().splitlines()[-12:]:
+            log("    " + ln)
+        sys.exit("レンダリングに失敗した。上のエラーを見ること")
     return r.returncode
 
 # ── 7. 納品パック
@@ -739,6 +844,7 @@ def main():
     ap.add_argument("--keywords",default=None,help="カンマ区切り。素材固有の用語")
     ap.add_argument("--style",default=None,help="styles/*.yaml の style_id（例: kirinuki）")
     ap.add_argument("--no-diarize",action="store_true")
+    ap.add_argument("--no-cut",action="store_true",help="無音カットをしない")
     ap.add_argument("--logo",default=None,help="チャンネルロゴ画像。スタイルが nameplate を持つとき使う")
     a=ap.parse_args()
     global KEYWORDS
@@ -787,12 +893,25 @@ def main():
         except Exception as e:
             log(f"  話者分離をスキップ（{e}）")
     caps = mark_kinds(caps, spk_ok)
+
+    # ── 5.7 自動カット。**字幕の時刻もカット後の時間軸へ写す**
+    cuts = []
+    if not a.no_cut:
+        log("⑤.7 自動カット")
+        cuts = find_cuts(words, env, wd, caps)
+        if cuts:
+            rm = sum(c["end"] - c["start"] for c in cuts)
+            for c in caps:
+                c["start"], c["end"] = remap(c["start"], cuts), remap(c["end"], cuts)
+            caps = [c for c in caps if c["end"] - c["start"] >= 0.25]
+            env = dict(env, dur=round(env["dur"] - rm, 3))
     json.dump(caps,open(f"{wd}/captions.json","w"),ensure_ascii=False,indent=1)
+    json.dump(cuts,open(f"{wd}/cuts.json","w"),ensure_ascii=False,indent=1)
 
     log("⑥ 字幕PNG")
     seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok,logo=a.logo)
     log("⑦ レンダリング"); outp=f"{dist}/final.mp4"
-    rc=render(src,seq,env,outp,wd)
+    rc=render(src,seq,env,outp,wd,cuts)
     log("⑧ 納品パック"); qc=pack(caps,outp,wd,dist)
     log("─"*46)
     log(f"完成: {outp}")
