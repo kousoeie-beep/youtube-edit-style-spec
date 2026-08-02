@@ -599,7 +599,68 @@ def remap(t, cuts):
     return round(t - off, 3)
 
 
-def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
+# 【2026-08-02】スタイルは entrance/exit を108箇所で宣言しているのに、
+#  パイプラインは全部ハードカットで出していた。論点見出しと同じ「宣言はあるが実装が無い」型。
+def anim_factor(kind, p, sec, elapsed):
+    """アニメーションの (拡大率, 不透明度) を返す。p=0→1 で進行。"""
+    if kind == "pop":
+        # 0.6 から 1.06 へ行き過ぎて 1.0 に落ち着く（一般的なポップイン）
+        if p < 0.7:
+            q = p / 0.7
+            return 0.6 + 0.46 * (1 - (1 - q) ** 2), min(1.0, p / 0.35)
+        q = (p - 0.7) / 0.3
+        return 1.06 - 0.06 * q, 1.0
+    if kind == "fade":
+        return 1.0, p
+    return 1.0, 1.0
+
+
+def phase_of(q, t):
+    """その描画行が今どの段階にいるか。(種類, 進行度) を返す。steady は (None, 1.0)。"""
+    ein, eout = q.get("entrance"), q.get("exit")
+    si, so = q.get("entrance_sec") or 0.0, q.get("exit_sec") or 0.0
+    if ein and ein != "hard_cut" and si > 0 and t < q["start"] + si:
+        return ein, max(0.0, (t - q["start"]) / si)
+    if eout and eout != "hard_cut" and so > 0 and t > q["end"] - so:
+        return eout, max(0.0, (q["end"] - t) / so)
+    return None, 1.0
+
+
+# ── 画像挿入（B-roll）
+#  スタイル側には画像を置く役が既にある（motion_graphic / app_logo_card /
+#  news_citation_card 等）。**役があるならそこへ置く**。無ければ画面内に収める。
+#  2026-08-02: 「これ風に作って」で画像まで入るようにするための最小実装。
+#  画像そのものは外から与える（動画から導けない情報なので発明しない）。
+def broll_items(images, topics, dur, hold=2.5):
+    """画像を話題の頭へ順に割り当てる。画像が足りなければ足りるぶんだけ。"""
+    if not images or not topics:
+        return []
+    out = []
+    for i, it in enumerate(topics):
+        if i >= len(images):
+            break
+        st = it["start"]
+        out.append({"path": images[i], "start": round(st, 2),
+                    "end": round(min(dur, st + hold), 2)})
+    return out
+
+
+def broll_box(style, canvas_w, canvas_h):
+    """画像を置く矩形。スタイルが画像の役を持つならその矩形、無ければ安全枠。"""
+    if style:
+        for rn in ("motion_graphic", "news_citation_card", "app_logo_card",
+                   "glossary_card", "sponsor_embed"):
+            r = next((x for x in style["roles"]
+                      if x["role"] == rn and x["resolved"]), None)
+            if r:
+                return tuple(round(v) for v in r["rect"]), rn
+    # 役が無いスタイル: 画面幅の 72% を上寄せで置く（字幕と見出しを避ける位置）
+    w = int(canvas_w * 0.72); h = int(w * 9 / 16)
+    x0 = (canvas_w - w) // 2; y0 = int(canvas_h * 0.28)
+    return (x0, y0, x0 + w, y0 + h), None
+
+
+def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
     fp = next((q for q in (
@@ -611,7 +672,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
         sys.exit("NotoSansJP-Bold.ttf が見つからない。~/Library/Fonts/ に入れてください")
 
     # ── スタイル定義を使う経路。失敗したら既定レイアウトに落ちる（無音で落ちない）
-    plan = None; bar = []; badge = None; shapes = []
+    plan = None; bar = []; badge = None; shapes = []; pics = []
     if style_id:
         try:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -655,6 +716,20 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
                 if qc:
                     bar += SA.render_role(st, "question_card", qc, W, H)
                     log(f"  質問カード {len(qc)}件")
+            # 画像挿入（B-roll）。**アニメーションは画像にも掛ける**（fadeで入れる）
+            if broll and os.path.isdir(broll):
+                imgs = sorted(os.path.join(broll, x) for x in os.listdir(broll)
+                              if x.lower().endswith((".png", ".jpg", ".jpeg", ".webp")))
+                bx, brole = broll_box(st, W, H)
+                bi_ = broll_items(imgs, items, env["dur"])
+                for b_ in bi_:
+                    b_["box"] = bx
+                pics.extend(bi_)
+                if pics:
+                    log(f"  画像挿入 {len(pics)}枚 / 置き場所 "
+                        f"{brole or '安全枠'} {bx}")
+                elif imgs:
+                    log("  ⚠ 画像はあるが話題が無いので挿入しない")
             # レターボックス（図形。導出でも発明でもなく幾何そのもの）
             for rn in ("letterbox", "letterbox_top", "letterbox_bottom"):
                 shapes += shape_items(st, rn, env["dur"])
@@ -727,43 +802,102 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None):
 
     FPS_ = FPS
     n = int(env["dur"] * FPS_) + 1
+
+    def bucket(rows, t):
+        """アニメーション中のフレームは1枚ずつ別のPNGにする。steady は 0。"""
+        if not rows: return 0
+        kind, _ = phase_of(rows[0], t)
+        if kind is None: return 0
+        if t - rows[0]["start"] < (rows[0].get("entrance_sec") or 0):
+            return 1 + int(round((t - rows[0]["start"]) * FPS_))
+        return -1 - int(round((rows[0]["end"] - t) * FPS_))
+
     keys = []
     for fr in range(n):
         t = fr / FPS_
-        keys.append((at(ev, t), at(bev, t)))
+        ci, bi = at(ev, t), at(bev, t)
+        pk = tuple(int(round((t - p_["start"]) * FPS_)) if p_["start"] <= t < p_["end"]
+                   else -1 for p_ in pics)
+        keys.append((ci, bucket(ev.get(ci), t), bi, bucket(bev.get(bi), t), pk))
     uniq = sorted(set(keys))
 
     fonts = {}
     out=f"{wd}/capseq"; shutil.rmtree(out,ignore_errors=True); os.makedirs(out)
     ng=set(); M={}
+
+    def layer(rows, t):
+        """1グループを描いて、宣言どおりのアニメーションを掛けた層を返す。"""
+        lay = Image.new("RGBA",(W,H),(0,0,0,0)); dd = ImageDraw.Draw(lay)
+        for q in sorted(rows, key=lambda r: r.get("z_order") or 0):
+            fk=(q["font_px"],)
+            f = fonts.get(fk) or fonts.setdefault(fk, ImageFont.truetype(fp,q["font_px"]))
+            st=q["stroke_px"]; x,y=q["x"],q["y"]
+            fill = tuple(q.get("fill") or SPK_FILL[0])
+            dd.text((x+3,y+3),q["text"],font=f,fill=(0,0,0,115),stroke_width=st,stroke_fill=(0,0,0,115))
+            dd.text((x,y),q["text"],font=f,fill=fill,stroke_width=st,stroke_fill=(0,0,0,255))
+        kind, prog = phase_of(rows[0], t) if rows else (None, 1.0)
+        if kind is None:
+            return lay
+        sc, al = anim_factor(kind, prog, 0, 0)
+        bb = lay.getbbox()
+        if bb and abs(sc - 1.0) > 1e-3:
+            crop = lay.crop(bb)
+            nw, nh = max(1,int(crop.width*sc)), max(1,int(crop.height*sc))
+            crop = crop.resize((nw,nh), Image.LANCZOS)
+            cx, cy = (bb[0]+bb[2])//2, (bb[1]+bb[3])//2
+            lay = Image.new("RGBA",(W,H),(0,0,0,0))
+            lay.alpha_composite(crop, (cx-nw//2, cy-nh//2))
+        if al < 0.999:
+            lay.putalpha(lay.getchannel("A").point(lambda v: int(v*al)))
+        return lay
+
     for key in uniq:
-        ci, bi = key
+        ci, cph, bi, bph, _pk = key
+        t = next(fr for fr, k in enumerate(keys) if k == key) / FPS_
         im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
         for shp in shapes:              # レターボックスは全編・全PNG
             d.rectangle(list(shp["box"]), fill=(0, 0, 0, 255))
+        for pc in pics:                 # 挿入画像。字幕より下の層に置く
+            if not (pc["start"] <= t < pc["end"]): continue
+            src_ = Image.open(pc["path"]).convert("RGBA")
+            x0,y0,x1,y1 = pc["box"]; bw,bh = x1-x0, y1-y0
+            k = min(bw/src_.width, bh/src_.height)
+            src_ = src_.resize((max(1,int(src_.width*k)), max(1,int(src_.height*k))))
+            # 【2026-08-02】枠なしで置くと「事故で重なった」ように見える。
+            #  資料インサートとして意図が伝わる体裁（白フチ＋影＋角丸）を付ける。
+            PAD, RAD = 10, 16
+            cw_, ch_ = src_.width + PAD*2, src_.height + PAD*2
+            card = Image.new("RGBA", (cw_+18, ch_+18), (0,0,0,0))
+            cd = ImageDraw.Draw(card)
+            cd.rounded_rectangle([12,12,cw_+12,ch_+12], RAD+2, fill=(0,0,0,90))   # 影
+            cd.rounded_rectangle([0,0,cw_,ch_], RAD, fill=(255,255,255,255))      # 白フチ
+            m_ = Image.new("L", src_.size, 0)
+            ImageDraw.Draw(m_).rounded_rectangle([0,0,src_.width,src_.height], RAD-4, fill=255)
+            card.paste(src_, (PAD, PAD), m_)
+            # 0.35秒でフェードイン／アウト（スタイルが画像役に宣言している値と同じ）
+            fadev = 0.35
+            al = min(1.0, (t-pc["start"])/fadev, (pc["end"]-t)/fadev, 1.0)
+            if al < 0.999:
+                card.putalpha(card.getchannel("A").point(lambda v: int(v*max(0.0,al))))
+            im.alpha_composite(card, (x0+(bw-card.width)//2, y0+(bh-card.height)//2))
         if badge:                       # 常駐なので全PNGに乗せる
             b = Image.open(badge["path"]).convert("RGBA")
             x0, y0, x1, y1 = badge["box"]
             bw, bh = x1 - x0, y1 - y0
-            k = min(bw / b.width, bh / b.height)      # 縦横比を保って内接
+            k = min(bw / b.width, bh / b.height)
             b = b.resize((max(1, int(b.width * k)), max(1, int(b.height * k))))
             im.alpha_composite(b, (x0 + (bw - b.width) // 2, y0 + (bh - b.height) // 2))
-        rows = (ev.get(ci) or []) + (bev.get(bi) or [])
-        for q in sorted(rows, key=lambda r: r.get("z_order") or 0):
-            fk=(q["font_px"],); f=fonts.get(fk) or fonts.setdefault(fk, ImageFont.truetype(fp,q["font_px"]))
-            st=q["stroke_px"]; x,y=q["x"],q["y"]
-            fill = tuple(q.get("fill") or SPK_FILL[0])
-            d.text((x+3,y+3),q["text"],font=f,fill=(0,0,0,115),stroke_width=st,stroke_fill=(0,0,0,115))
-            d.text((x,y),q["text"],font=f,fill=fill,stroke_width=st,stroke_fill=(0,0,0,255))
-            x0,y0,x1,y1=q["bbox"]
-            if x0-3<16 or x1+12>W-16 or y0-3<16 or y1+12>H-16: ng.add(key)
-        if not rows:
-            M[key]=f"{out}/_blank.png"
-            if not os.path.exists(M[key]): im.save(M[key])
-            continue
-        M[key]=f"{out}/_m{uniq.index(key):03d}.png"; im.save(M[key])
+        for rows in (ev.get(ci), bev.get(bi)):
+            if not rows: continue
+            im.alpha_composite(layer(rows, t))
+        # 4辺検算。**アニメーション中の行き過ぎ（pop は1.06倍）も含めて見る**
+        bb = im.getbbox()
+        if bb and (bb[0]-3 < 16 or bb[2]+12 > W-16 or bb[1]-3 < 16 or bb[3]+12 > H-16):
+            if not shapes and not badge:      # 帯やロゴは端に置く設計なので除く
+                ng.add(key)
+        M[key]=f"{out}/_m{uniq.index(key):04d}.png"; im.save(M[key])
+    log(f"  字幕PNG {len(M)}枚（アニメーション込み）/ 連番{n} / 4辺検算NG {len(ng)}件")
     for fr in range(n): os.link(M[keys[fr]], f"{out}/{fr:05d}.png")
-    log(f"  字幕PNG {len(set(M.values()))}枚 / 連番{n} / 4辺検算NG {len(ng)}件")
     return out, len(ng)
 
 # ── 6. レンダリング（loudnorm 2パス・HWエンコード）
@@ -846,6 +980,7 @@ def main():
     ap.add_argument("--no-diarize",action="store_true")
     ap.add_argument("--no-cut",action="store_true",help="無音カットをしない")
     ap.add_argument("--logo",default=None,help="チャンネルロゴ画像。スタイルが nameplate を持つとき使う")
+    ap.add_argument("--broll",default=None,help="挿入画像のフォルダ。話題の頭へ順に入れる")
     a=ap.parse_args()
     global KEYWORDS
     if a.keywords: KEYWORDS = [x.strip() for x in a.keywords.split(",") if x.strip()]
@@ -909,7 +1044,7 @@ def main():
     json.dump(cuts,open(f"{wd}/cuts.json","w"),ensure_ascii=False,indent=1)
 
     log("⑥ 字幕PNG")
-    seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok,logo=a.logo)
+    seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok,logo=a.logo,broll=a.broll)
     log("⑦ レンダリング"); outp=f"{dist}/final.mp4"
     rc=render(src,seq,env,outp,wd,cuts)
     log("⑧ 納品パック"); qc=pack(caps,outp,wd,dist)

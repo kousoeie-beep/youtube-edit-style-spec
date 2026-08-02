@@ -182,6 +182,11 @@ def resolve_role(layer, s, cw, ch, orientation, variant=None):
          "opaque_fullscreen": bool(layer.get("opaque_fullscreen")),
          "edge_bleed": bool(layer.get("edge_bleed")),
          "overflow_policy": layer.get("overflow_policy"),
+         # 【2026-08-02】スタイルはアニメーションを108箇所で宣言しているのに、
+         #  ここで拾っていなかったので実装側に届かず、全部ハードカットで出ていた。
+         "entrance": layer.get("entrance"), "exit": layer.get("exit"),
+         "entrance_sec": _num(layer.get("entrance_sec")) or 0.0,
+         "exit_sec": _num(layer.get("exit_sec")) or 0.0,
          "is_caption": role in CAPTION_ROLES,
          "mutually_exclusive_with": layer.get("mutually_exclusive_with") or [],
          "intentional_overlap_with": layer.get("intentional_overlap_with") or []}
@@ -903,6 +908,9 @@ def render_plan(style, caps, canvas_w, canvas_h, speaker_kinds=False):
                 "font_px": cfg["font_px"], "stroke_px": st,
                 "start": ev["start"], "end": ev["end"],   # 半開区間 [start, end)
                 "z_order": cfg["role"]["z_order"],
+                "entrance": cfg["role"]["entrance"], "exit": cfg["role"]["exit"],
+                "entrance_sec": cfg["role"]["entrance_sec"],
+                "exit_sec": cfg["role"]["exit_sec"],
                 "event_index": ei, "line_index": k, "lines": len(lines),
                 "bbox": tuple(round(v, 1) for v in ink),
                 "split": bool(ev.get("_split")),
@@ -945,6 +953,8 @@ def render_role(style, role_name, items, canvas_w, canvas_h):
                 "font_px": fp, "stroke_px": st,
                 "start": it["start"], "end": it["end"],
                 "z_order": r["z_order"], "event_index": ei, "line_index": k,
+                "entrance": r["entrance"], "exit": r["exit"],
+                "entrance_sec": r["entrance_sec"], "exit_sec": r["exit_sec"],
                 "lines": len(lines), "persistent": True,
                 "bbox": (cx - w / 2, top + lh * k,
                          cx + w / 2, top + lh * k + (b[3] - b[1])),

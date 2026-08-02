@@ -400,6 +400,10 @@ telop_layers:
     style: プレーン（黄色ハイライト）
     z_order: 2
     entrance: pop                  # 未計測（推定、他ジャンルのハイライト強調との類推）
+    entrance_sec: 0.2
+      # 【2026-08-02】pop は「定義上0秒」として検査から外していたが誤り。
+      # hard_cut は本当に0秒だが、**pop はアニメーションなので0秒ではない**。
+      # 0.2 は【導出値・要実測】。同ファイル内の fade 0.35 より短い一般的なポップの尺。
     exit: hard_cut                  # 未計測（推定）
   - role: sponsor_logo            # 【2026-07-27 role分離修正】旧: role: nameplate。A2内部で
     # 「チャンネルロゴ」と同一role名を共有し、機能の異なる2装置（別々のロゴ）が1roleに

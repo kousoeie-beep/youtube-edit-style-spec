@@ -146,6 +146,10 @@ telop_layers:
     style: 袋文字
     z_order: 3                # 【2026-07-26 遡及追加】
     entrance: pop                # 秒数未計測（推定）
+    entrance_sec: 0.2
+      # 【2026-08-02】pop は「定義上0秒」として検査から外していたが誤り。
+      # hard_cut は本当に0秒だが、**pop はアニメーションなので0秒ではない**。
+      # 0.2 は【導出値・要実測】。同ファイル内の fade 0.35 より短い一般的なポップの尺。
     exit: fade                    # 秒数未計測（推定）
     mutually_exclusive_with: [category_box, region_card]   # 【2026-07-27 非対称を解消】
       # region_card 側には definition_pill との排他が書かれているのに、

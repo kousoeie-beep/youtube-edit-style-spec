@@ -809,15 +809,20 @@ def check_transition_seconds():
 
     【2026-07-27 R9追加】`entrance: fade` だけでは実装できず、実装者が
     秒数を発明する。全15ファイルで **fade 41件が秒数なし・exit 15件が欠落**していた。
-    hard_cut / pop は定義上0秒なので対象外にする（書いても情報が増えない）。
+    hard_cut は定義上0秒なので対象外。
+
+    【2026-08-02 訂正】pop も対象外にしていたが**これは誤り**。
+    hard_cut は本当に0秒だが、**pop はアニメーションなので定義上0秒ではない**。
+    0秒扱いにすると「ポップしない」ことになる。検査から外していたため、
+    pop の秒数欠落は一度も表に出ず、実装側は結局アニメーションを作らなかった。
     """
     out = []
     for f in sorted(glob.glob(os.path.join(STYLES, "*.yaml"))):
         name, layers, _ = _layers(f)
         for l in layers:
             for k in ("entrance", "exit"):
-                if l.get(k) == "fade" and l.get(k + "_sec") is None:
-                    out.append(f"  {name}/{l['role']}: {k}: fade なのに "
+                if l.get(k) in ("fade", "pop") and l.get(k + "_sec") is None:
+                    out.append(f"  {name}/{l['role']}: {k}: {l.get(k)} なのに "
                                f"{k}_sec が無い（実装者が秒数を発明する）")
             if l.get("entrance") and not l.get("exit"):
                 out.append(f"  {name}/{l['role']}: entrance はあるが exit が無い")
@@ -1166,7 +1171,7 @@ WARNINGS = [
     ("コマンド置換で記述が消えた跡（自分の一括編集の事故）",
      check_shell_substitution_damage),
     ("size があるのに中身（font_px / stroke_px）が無い", check_size_without_font),
-    ("fade なのに秒数が無い / exit 自体が無い", check_transition_seconds),
+    ("fade / pop なのに秒数が無い / exit 自体が無い", check_transition_seconds),
     ("max_lines≥2 なのに max_chars_total が無い（掛け算は上限にならない）",
      check_max_chars_total),
     ("max_chars があるのに overflow_policy が無い（行数は止まらない）",
