@@ -53,15 +53,35 @@
 
 ```bash
 uv run --with pillow --with fugashi --with unidic-lite --with mlx-whisper \
-  python3 pipeline/run.py <素材.mov>
+  --with pyyaml --with numpy --with scipy --with librosa --with soundfile \
+  python3 pipeline/run.py <素材.mov> --out <出力先> --style kirinuki
 ```
 （APIキーは無くても編集の核心＝カット/字幕/テロップ/音声/サムネ構成は完動します）
+
+**主なオプション**（2026-08-02 時点）
+
+| | |
+|---|---|
+| `--style <名前>` | スタイル定義（`youtube-edit-style-spec/styles/*.yaml`） |
+| `--broll <フォルダ>` | 画像インサート。話題の頭へ順に入れ、**画面と重なるなら自動でずらす** |
+| `--headlines <JSON>` | 論点見出しの差し替え。`{"0":"何を作ったのか"}` の形（`pipeline/headlines.example.json`） |
+| `--logo <画像>` | ロゴバッジ（nameplate）。渡さないと警告が出る |
+| `--no-diarize` | 話者分離を試みない（**この素材では2経路とも使えない**。TASK_NEXT.md ③） |
+
+**サムネ5案**（`pipeline/thumbs.py`）と **Shorts**（`pipeline/shorts.py`）は
+別モジュール。前者は背景フレームと文字を、後者は使う区間を**外から渡す**。
+どちらも「良い場面を規則で推定する」実装は意図的に持たない。
 
 ### 構成
 
 ```
 pipeline/
   run.py                      ← **1コマンドで動画を作る**（素材→字幕→レンダ→納品パック）
+  style_apply.py              ← スタイル定義を実際の描画計画へ落とす
+  diarize.py                  ← 話者分離（API/ローカル）。**現状どちらも実用外**
+  thumbs.py                   ← サムネ5案。読みやすさを明度差で検査して落とす
+  shorts.py                   ← 長尺→Shorts。区間は外から渡す
+  headlines.example.json      ← 論点見出しの差し替え例
   README.md                   ← 工程・実測値・既知の限界
 auto-youtube-edit-agent/
   auto_youtube_edit_agent.md  ← 【編集の一次指示書・678行】カット基準/字幕規則/

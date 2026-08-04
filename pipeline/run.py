@@ -35,6 +35,7 @@ def preflight(src):
     has = lambda n: any(len(l.split())>1 and l.split()[1]==n for l in filters.splitlines())
     enc = sh(["ffmpeg","-hide_banner","-encoders"]).stdout
     return {"W":W,"H":H,"rot":rot,"dur":dur,"I":I,"created":_creation_time(src),
+            "src":src,                     # 画面占有率の測定に使う。
             "portrait":H>W, "drawtext":has("drawtext"),
             "hwenc":"h264_videotoolbox" in enc}
 
@@ -366,6 +367,30 @@ def mark_kinds(caps, spk_ok):
 # 位置を変えるより安全（位置を動かすと4辺検算とすきま検算がやり直しになる）。
 SPK_FILL = [(255,255,255,255), (255,224,138,255), (168,230,255,255)]
 
+def apply_headlines(items, path):
+    """論点見出しを外から差し替える。
+
+    自動生成は「話題を開いた質問文をそのまま」使う（発明しないため）。
+    ただし見出しとしては長い。要約は**規則ではなく人（またはLLM）が書く**もので、
+    ここはその受け口。JSON は {"0": "何を作ったのか", ...} の形（キーは話題の順番）。
+
+    差し替えた見出しは元の質問文と時刻が変わらない。**話題の切れ目そのものは
+    素材から取ったまま**で、文言だけを差し替える。
+    """
+    if not path or not os.path.exists(path):
+        return items, 0
+    over = json.load(open(path, encoding="utf-8"))
+    n = 0
+    out = []
+    for i, it in enumerate(items):
+        t = over.get(str(i))
+        if t:
+            it = dict(it, text=t, headline_source="override")
+            n += 1
+        out.append(it)
+    return out, n
+
+
 def topic_items(caps, dur):
     """論点見出しの帯に流す項目を作る。
 
@@ -631,17 +656,110 @@ def phase_of(q, t):
 #  news_citation_card 等）。**役があるならそこへ置く**。無ければ画面内に収める。
 #  2026-08-02: 「これ風に作って」で画像まで入るようにするための最小実装。
 #  画像そのものは外から与える（動画から導けない情報なので発明しない）。
-def broll_items(images, topics, dur, hold=2.5):
-    """画像を話題の頭へ順に割り当てる。画像が足りなければ足りるぶんだけ。"""
+SCREEN_BUSY = 0.28   # 画面がこの割合を超えて写っていたら重ねない【導出値・要実測】
+
+
+def screen_box(src, t, wd, W, H):
+    """その時刻に「明るい画面」が画角のどこにあるか。(x0,y0,x1,y1) を返す。
+    無ければ None。
+
+    【2026-08-02】最初は「画面が画角のどれだけを占めるか」を測って、
+    大きければ挿入を見送る実装にした。**測る対象が違った。**
+    問題は画面の大きさではなく「挿入枠が画面に重なるか」で、
+    占有率10%でもテレビの真上に置けば結果は同じだった。
+    """
+    try:
+        import numpy as np
+        from scipy import ndimage
+        from PIL import Image
+        f = os.path.join(wd, f"_probe_{int(t*10)}.png")
+        sh(["ffmpeg", "-v", "error", "-ss", str(t), "-i", src,
+            "-frames:v", "1", "-vf", "scale=320:-1", "-y", f])
+        g = np.array(Image.open(f).convert("L")); os.remove(f)
+        m = g > 195
+        lab, n = ndimage.label(m)
+        if n == 0:
+            return None
+        sz = ndimage.sum(m, lab, range(1, n + 1))
+        ys, xs = np.nonzero(lab == int(np.argmax(sz)) + 1)
+        k = W / g.shape[1]
+        # int() で包む。numpy の float が枠に混ざると PIL の paste が落ちる
+        # （numpy 真偽値が json.dump を落としたのと同じ型のミス。2度目）
+        return (int(xs.min()*k), int(ys.min()*k), int(xs.max()*k), int(ys.max()*k))
+    except Exception as e:
+        log(f"  ⚠ 画面位置を測れなかった（{type(e).__name__}: {e}）→ そのまま置く")
+        return None
+
+
+def _overlap(a, b):
+    """2つの矩形の重なり面積 ÷ a の面積。"""
+    x0 = max(a[0], b[0]); y0 = max(a[1], b[1])
+    x1 = min(a[2], b[2]); y1 = min(a[3], b[3])
+    if x1 <= x0 or y1 <= y0:
+        return 0.0
+    return (x1-x0)*(y1-y0) / max(1.0, (a[2]-a[0])*(a[3]-a[1]))
+
+
+def avoid_screen(box, scr, H, margin=40):
+    """挿入枠が画面に重なるなら、重ならない位置へ縦にずらす。
+    ずらせなければ元の位置のまま返す（消さない。画像自体には価値がある）。"""
+    if not scr or _overlap(box, scr) < OVERLAP_MAX:
+        return box, 0.0
+    x0, y0, x1, y1 = box
+    h = y1 - y0
+    for cand in (int(scr[3]) + margin, int(scr[1]) - margin - h):  # 画面の下 → 上
+        if margin <= cand and cand + h <= H - margin:
+            cand = int(cand); nb = (x0, cand, x1, cand + h)
+            if _overlap(nb, scr) < OVERLAP_MAX:
+                return nb, _overlap(box, scr)
+    return box, _overlap(box, scr)
+
+
+OVERLAP_MAX = 0.22   # 挿入枠のこの割合を超えて画面に重なったらずらす【導出値・要実測】
+COLLIDE_MAX = 0.02   # 要素どうしがこの割合を超えて重なったら報告【導出値・要実測】
+
+
+def unmap(t, cuts):
+    """カット後の時刻 → 元素材の時刻。
+
+    【2026-08-02】capseq に渡る caps は**カット後**の時刻に変換済みなのに、
+    それをそのまま**元素材**に当てて画面位置を測っていた。別の瞬間を見ていた
+    ことになり、重なり率（38〜51%）も間違ったフレームに対する数字だった。
+    """
+    if not cuts:
+        return t
+    s = t
+    for c in sorted(cuts, key=lambda c: c["start"]):
+        if c["start"] <= s:
+            s += c["end"] - c["start"]
+        else:
+            break
+    return s
+
+
+def broll_items(images, topics, dur, hold=2.5, src=None, wd=None,
+                box=None, H=1920, cuts=None, W_CANVAS=1080):
+    """画像を話題の頭へ順に割り当てる。画像が足りなければ足りるぶんだけ。
+    **置く前にその時刻の画面位置を見て、重なるならずらす。**"""
     if not images or not topics:
         return []
-    out = []
+    out, moved = [], []
     for i, it in enumerate(topics):
         if i >= len(images):
             break
         st = it["start"]
+        b = box
+        if src and wd and box:
+            # 元素材の時刻に戻してから測る。W は画布の幅（枠の座標ではない）
+            scr = screen_box(src, unmap(st + 0.5, cuts), wd, W_CANVAS, H)
+            b, ov = avoid_screen(box, scr, H)
+            if b != box:
+                moved.append((round(st, 1), round(ov * 100)))
         out.append({"path": images[i], "start": round(st, 2),
-                    "end": round(min(dur, st + hold), 2)})
+                    "end": round(min(dur, st + hold), 2), "box": b})
+    if moved:
+        log("  画像インサートをずらした: "
+            + " / ".join(f"{t}秒（画面と{p}%重なっていた）" for t, p in moved))
     return out
 
 
@@ -660,7 +778,8 @@ def broll_box(style, canvas_w, canvas_h):
     return (x0, y0, x0 + w, y0 + h), None
 
 
-def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
+def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None,
+           headlines=None, cuts_=None, topic=True):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
     fp = next((q for q in (
@@ -682,7 +801,14 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
             ev = len({p["event_index"] for p in plan})
             log(f"  スタイル {style_id} を適用: {ev}イベント / {len(plan)}行")
             # 常駐の論点見出し帯。**字幕しか描かないのは「スタイルを再現した」とは言えない**
-            items = topic_items(caps, env["dur"])
+            # 【2026-08-02】Shorts は区間を組み替えるので「現在の話題」が
+            #  成立しない。自動検出した見出しを残すと内容とずれる（実測: 30秒
+            #  地点で新人研修の話をしているのに見出しは「デザインできるんですか?」）。
+            #  **成立しない装置は出さない。**
+            items = topic_items(caps, env["dur"]) if topic else []
+            items, nov = apply_headlines(items, headlines)
+            if nov:
+                log(f"  論点見出しを {nov}件 差し替え（--headlines）")
             # 見出し系の役は「現在の話題」を出すという同じ機能なので、
             # どれか1つでも解決していればそこへ流す（別実装を作らない）。
             TOPIC_ROLES = ("title_bar", "chapter_tag", "chapter_tab",
@@ -721,9 +847,32 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
                 imgs = sorted(os.path.join(broll, x) for x in os.listdir(broll)
                               if x.lower().endswith((".png", ".jpg", ".jpeg", ".webp")))
                 bx, brole = broll_box(st, W, H)
-                bi_ = broll_items(imgs, items, env["dur"])
+                bi_ = broll_items(imgs, items, env["dur"],
+                                  src=env.get("src"), wd=wd, box=bx, H=H,
+                                  cuts=cuts_, W_CANVAS=W)
+                # 【2026-08-02】PNG1枚ごとに開き直していたので、1000枚超×画像枚数ぶん
+                #  ファイルを開き、v17 は UnidentifiedImageError で落ちた。
+                #  毎回リサイズとカード生成をやり直してもいた。**1回だけ作る。**
+                PAD, RAD = 10, 16
                 for b_ in bi_:
-                    b_["box"] = bx
+                    src_ = Image.open(b_["path"]).convert("RGBA")
+                    # ずらした枠は項目ごとに違う。共通の bx を使うと寸法が食い違う
+                    _b = b_.get("box") or bx
+                    bw_, bh_ = _b[2]-_b[0], _b[3]-_b[1]
+                    k_ = min(bw_/src_.width, bh_/src_.height)
+                    src_ = src_.resize((max(1,int(src_.width*k_)), max(1,int(src_.height*k_))),
+                                       Image.LANCZOS)
+                    cw_, ch_ = src_.width + PAD*2, src_.height + PAD*2
+                    card = Image.new("RGBA", (cw_+18, ch_+18), (0,0,0,0))
+                    cd = ImageDraw.Draw(card)
+                    cd.rounded_rectangle([12,12,cw_+12,ch_+12], RAD+2, fill=(0,0,0,90))
+                    cd.rounded_rectangle([0,0,cw_,ch_], RAD, fill=(255,255,255,255))
+                    m_ = Image.new("L", src_.size, 0)
+                    ImageDraw.Draw(m_).rounded_rectangle(
+                        [0,0,src_.width,src_.height], RAD-4, fill=255)
+                    card.paste(src_, (PAD, PAD), m_)
+                    b_["_card"] = card
+                    src_.close()
                 pics.extend(bi_)
                 if pics:
                     log(f"  画像挿入 {len(pics)}枚 / 置き場所 "
@@ -823,7 +972,7 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
 
     fonts = {}
     out=f"{wd}/capseq"; shutil.rmtree(out,ignore_errors=True); os.makedirs(out)
-    ng=set(); M={}
+    ng=set(); not_inspected=set(); collide=[]; M={}
 
     def layer(rows, t):
         """1グループを描いて、宣言どおりのアニメーションを掛けた層を返す。"""
@@ -855,31 +1004,23 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
         ci, cph, bi, bph, _pk = key
         t = next(fr for fr, k in enumerate(keys) if k == key) / FPS_
         im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
+        parts = {}                      # 要素ごとの層。重なり検査に使う
         for shp in shapes:              # レターボックスは全編・全PNG
             d.rectangle(list(shp["box"]), fill=(0, 0, 0, 255))
         for pc in pics:                 # 挿入画像。字幕より下の層に置く
             if not (pc["start"] <= t < pc["end"]): continue
-            src_ = Image.open(pc["path"]).convert("RGBA")
-            x0,y0,x1,y1 = pc["box"]; bw,bh = x1-x0, y1-y0
-            k = min(bw/src_.width, bh/src_.height)
-            src_ = src_.resize((max(1,int(src_.width*k)), max(1,int(src_.height*k))))
-            # 【2026-08-02】枠なしで置くと「事故で重なった」ように見える。
-            #  資料インサートとして意図が伝わる体裁（白フチ＋影＋角丸）を付ける。
-            PAD, RAD = 10, 16
-            cw_, ch_ = src_.width + PAD*2, src_.height + PAD*2
-            card = Image.new("RGBA", (cw_+18, ch_+18), (0,0,0,0))
-            cd = ImageDraw.Draw(card)
-            cd.rounded_rectangle([12,12,cw_+12,ch_+12], RAD+2, fill=(0,0,0,90))   # 影
-            cd.rounded_rectangle([0,0,cw_,ch_], RAD, fill=(255,255,255,255))      # 白フチ
-            m_ = Image.new("L", src_.size, 0)
-            ImageDraw.Draw(m_).rounded_rectangle([0,0,src_.width,src_.height], RAD-4, fill=255)
-            card.paste(src_, (PAD, PAD), m_)
-            # 0.35秒でフェードイン／アウト（スタイルが画像役に宣言している値と同じ）
+            card = pc["_card"]          # ★1回だけ作って使い回す
             fadev = 0.35
             al = min(1.0, (t-pc["start"])/fadev, (pc["end"]-t)/fadev, 1.0)
+            c2 = card
             if al < 0.999:
-                card.putalpha(card.getchannel("A").point(lambda v: int(v*max(0.0,al))))
-            im.alpha_composite(card, (x0+(bw-card.width)//2, y0+(bh-card.height)//2))
+                c2 = card.copy()
+                c2.putalpha(c2.getchannel("A").point(lambda v: int(v*max(0.0,al))))
+            x0,y0,x1,y1 = pc["box"]; bw,bh = x1-x0, y1-y0
+            pos = (x0+(bw-c2.width)//2, y0+(bh-c2.height)//2)
+            ly = Image.new("RGBA",(W,H),(0,0,0,0)); ly.alpha_composite(c2, pos)
+            parts["画像"] = ly
+            im.alpha_composite(c2, pos)
         if badge:                       # 常駐なので全PNGに乗せる
             b = Image.open(badge["path"]).convert("RGBA")
             x0, y0, x1, y1 = badge["box"]
@@ -887,16 +1028,47 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None):
             k = min(bw / b.width, bh / b.height)
             b = b.resize((max(1, int(b.width * k)), max(1, int(b.height * k))))
             im.alpha_composite(b, (x0 + (bw - b.width) // 2, y0 + (bh - b.height) // 2))
-        for rows in (ev.get(ci), bev.get(bi)):
+        for nm, rows in (("字幕", ev.get(ci)), ("見出し", bev.get(bi))):
             if not rows: continue
-            im.alpha_composite(layer(rows, t))
+            ly = layer(rows, t)
+            parts[nm] = ly
+            im.alpha_composite(ly)
         # 4辺検算。**アニメーション中の行き過ぎ（pop は1.06倍）も含めて見る**
-        bb = im.getbbox()
-        if bb and (bb[0]-3 < 16 or bb[2]+12 > W-16 or bb[1]-3 < 16 or bb[3]+12 > H-16):
-            if not shapes and not badge:      # 帯やロゴは端に置く設計なので除く
+        #  【2026-08-02】帯やロゴがあると検査を丸ごと飛ばすのに「NG 0件」と
+        #  報告していた。qc-gates.md が「1つも検査していないのに合格に見える」
+        #  偽の安全信号として名指ししている型。**検査不能は合格ではない。**
+        if shapes or badge:
+            not_inspected.add(key)
+        else:
+            bb = im.getbbox()
+            if bb and (bb[0]-3 < 16 or bb[2]+12 > W-16
+                       or bb[1]-3 < 16 or bb[3]+12 > H-16):
                 ng.add(key)
+
+        # 【2026-08-02】要素どうしの重なりを一度も見ていなかった。
+        #  qc-gates.md の盲点①「同一PNG内部の描画順ミスは原理的に検出できない」
+        #  ——レイヤー間QCの話だが、**全部を1枚に描く実装では自分で見るしかない**。
+        #  実描画インクの矩形どうしで測る（宣言矩形ではなく実際に塗った範囲）。
+        boxes = {k: v.getbbox() for k, v in parts.items() if v.getbbox()}
+        names = sorted(boxes)
+        for ii in range(len(names)):
+            for jj in range(ii + 1, len(names)):
+                a, b = boxes[names[ii]], boxes[names[jj]]
+                ov = _overlap(a, b)
+                if ov > COLLIDE_MAX:
+                    collide.append((names[ii], names[jj], round(ov * 100)))
         M[key]=f"{out}/_m{uniq.index(key):04d}.png"; im.save(M[key])
-    log(f"  字幕PNG {len(M)}枚（アニメーション込み）/ 連番{n} / 4辺検算NG {len(ng)}件")
+    edge = (f"4辺検算NG {len(ng)}件" if not not_inspected
+            else f"4辺検算 **検査不能 {len(not_inspected)}枚**（帯/ロゴあり）")
+    log(f"  字幕PNG {len(M)}枚（アニメーション込み）/ 連番{n} / {edge}")
+    if collide:
+        agg = {}
+        for a, b, v in collide:
+            k = f"{a}×{b}"; agg[k] = max(agg.get(k, 0), v)
+        log("  ⚠ 要素が重なっている: "
+            + " / ".join(f"{k} 最大{v}%" for k, v in sorted(agg.items())))
+    else:
+        log("  要素どうしの重なり: 0件")
     for fr in range(n): os.link(M[keys[fr]], f"{out}/{fr:05d}.png")
     return out, len(ng)
 
@@ -981,6 +1153,8 @@ def main():
     ap.add_argument("--no-cut",action="store_true",help="無音カットをしない")
     ap.add_argument("--logo",default=None,help="チャンネルロゴ画像。スタイルが nameplate を持つとき使う")
     ap.add_argument("--broll",default=None,help="挿入画像のフォルダ。話題の頭へ順に入れる")
+    ap.add_argument("--headlines",default=None,
+                    help="論点見出しの差し替えJSON。{\"0\":\"何を作ったのか\"} の形")
     a=ap.parse_args()
     global KEYWORDS
     if a.keywords: KEYWORDS = [x.strip() for x in a.keywords.split(",") if x.strip()]
@@ -1019,12 +1193,19 @@ def main():
                 meta = json.load(open(f"{wd}/diarization.json"))
                 conf = meta.get("confidence")
                 low  = bool(meta.get("low_confidence"))
-                caps = DZ.assign_speakers(caps, turns)
                 spk_ok = not low
+                # 【2026-08-02】信用できない話者ラベルを caps に焼くと、
+                #  色分けを止めても mark_kinds が話者ベースに切り替わり、
+                #  論点見出しが6件→1件に崩れた。**信用できないなら付けない。**
+                if spk_ok:
+                    caps = DZ.assign_speakers(caps, turns)
                 n = len({t.get("speaker") for t in turns})
                 cs = "—" if conf is None else f"{conf:.3f}"
-                log(f"  話者 {n}人 / 経路 {meta.get('route')} / 確信度 {cs} → "
-                    + ("テロップを色分け" if spk_ok else "**確信度が低いので色分けしない**"))
+                mt = meta.get("median_turn_sec")
+                log(f"  話者 {n}人 / 経路 {meta.get('route')} / 確信度 {cs}"
+                    f" / ターン長中央値 {mt}秒 → "
+                    + ("テロップを色分け" if spk_ok
+                       else "**信用できないので話者を使わない**"))
         except Exception as e:
             log(f"  話者分離をスキップ（{e}）")
     caps = mark_kinds(caps, spk_ok)
@@ -1044,7 +1225,8 @@ def main():
     json.dump(cuts,open(f"{wd}/cuts.json","w"),ensure_ascii=False,indent=1)
 
     log("⑥ 字幕PNG")
-    seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok,logo=a.logo,broll=a.broll)
+    seq,ng=capseq(caps,env,wd,style_id=a.style,spk_ok=spk_ok,logo=a.logo,broll=a.broll,
+                  headlines=a.headlines,cuts_=cuts)
     log("⑦ レンダリング"); outp=f"{dist}/final.mp4"
     rc=render(src,seq,env,outp,wd,cuts)
     log("⑧ 納品パック"); qc=pack(caps,outp,wd,dist)

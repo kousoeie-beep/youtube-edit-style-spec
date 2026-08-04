@@ -25,6 +25,11 @@ APIキーは **os.environ から取るだけ**。.env は読まない。値は�
 import argparse, json, os, subprocess, sys
 
 API_MODEL = "gpt-4o-transcribe-diarize"
+# 経路によらない妥当性の閾値。どちらも【導出値・要実測】
+MAX_SPEAKERS = 4      # 対話動画で5人以上は分割しすぎ
+MIN_TURN_SEC = 0.8    # 実際の発話ターンは秒単位。0.3秒は分割しすぎ
+# 言語指定が使えないモデルなので、prompt で日本語へ誘導する
+DIAR_PROMPT = "以下は日本語の会話です。インタビュアーと回答者が交互に話します。"
 API_URL   = "https://api.openai.com/v1/audio/transcriptions"
 API_LIMIT = 25 * 1024 * 1024          # 一次情報の 25MB 上限
 
@@ -66,7 +71,18 @@ def _api_diarize(wav_path, work_dir):
            "-F", f"file=@{send}",
            "-F", f"model={API_MODEL}",
            "-F", "response_format=diarized_json",
+           # 【2026-08-02 実測】このモデルは言語を指定できない。
+           #   languages[]=ja → 「このモデルでは非対応」と明示的に拒否
+           #   language=ja    → エラーは出ないが効かない（英語のまま出る）
+           #  自動判定に任せるしかないが、日本語音声を英語として書き起こす
+           #  （実測: "Could I just know what they did to create this?"）。
+           #  そこで prompt で日本語へ誘導する。
+           "-F", f"prompt={DIAR_PROMPT}",
            "-F", "chunking_strategy=auto"]             # 30秒超で必須
+    # 【2026-08-02】language を渡しておらず、日本語音声を**英語として**書き起こして
+    #  いた（実測: " Could I just know what they did to create this?"）。
+    #  中身が別物なので話者の割り当ても壊れ、2人の対話に9〜11人を返していた。
+    #  文字起こし側は言語を指定していたのに、話者分離側だけ抜けていた。
     r = subprocess.run(cmd, capture_output=True, text=True)
     try:
         d = json.loads(r.stdout)
@@ -273,10 +289,39 @@ def diarize(wav_path: str, work_dir: str, segments: list = None) -> list:
     meta = {"route": route, "source": os.path.basename(wav_path),
             "speakers": sorted({t["speaker"] for t in turns}),
             "turns": turns}
+    # 【2026-08-02】確信度をローカル経路でしか計算しておらず、API経路は
+    #  判定を素通りしていた。実測: API が2人の対話に**9人**・ターン長中央値
+    #  **0.30秒**を返し、pipeline はそれを信用して論点見出しを6件→1件に壊した。
+    #  真値が無くても効く手掛かりは「話者数」と「ターン長」の2つ。経路によらず測る。
+    #  なお API が返すのは**セグメント**であって話者ターンではない。繋いでから測る。
+    #  （繋がずに測ると「0.3秒のターンが200件」に見え、原因を読み違える）
+    merged, durs = [], []
+    for t in turns:
+        if merged and merged[-1]["speaker"] == t["speaker"]:
+            merged[-1]["end"] = t["end"]
+        else:
+            merged.append(dict(t))
+    durs = sorted(x["end"] - x["start"] for x in merged
+                  if "end" in x and "start" in x)
+    n_spk = len(meta["speakers"])
+    med = durs[len(durs) // 2] if durs else 0.0
+    meta["turn_count"] = len(merged)
+    # 対話は2〜3人。ターンは秒単位。どちらも【導出値・要実測】
+    # bool() で包む。numpy 由来の真偽値だと json.dump が落ちる（実測でローカル経路が
+    # クラッシュした。API経路では float が素の Python 型なので表に出なかった）
+    implausible = bool(n_spk > MAX_SPEAKERS or med < MIN_TURN_SEC)
+    meta["speaker_count"] = n_spk
+    meta["median_turn_sec"] = round(float(med), 3)
+    meta["implausible"] = implausible
     if route.startswith("local"):
         meta["confidence"] = _LAST.get("confidence")
         meta["silhouette_by_k"] = _LAST.get("silhouette")
-        meta["low_confidence"] = (_LAST.get("confidence") or 0) < CONF_MIN
+        meta["low_confidence"] = bool((_LAST.get("confidence") or 0) < CONF_MIN or implausible)
+    else:
+        # API は確信度を返さない。**「不明」は「高い」ではない**ので、
+        # 妥当性検査だけで判定する。
+        meta["confidence"] = None
+        meta["low_confidence"] = implausible
     json.dump(meta, open(os.path.join(work_dir, "diarization.json"), "w"),
               ensure_ascii=False, indent=1)
     return turns
