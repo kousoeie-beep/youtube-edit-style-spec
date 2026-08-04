@@ -61,6 +61,33 @@ uv run --with pillow --with fugashi --with unidic-lite --with mlx-whisper \
 ```
 （APIキーは無くても編集の核心＝カット/字幕/テロップ/音声/サムネ構成は完動します）
 
+Linux / WSL では Apple Metal 専用の `mlx-whisper` の代わりに
+`openai-whisper` を使います。H.264 も VideoToolbox 固定ではなく `libx264` へ
+自動フォールバックします。
+
+```bash
+uv run --with pillow --with fugashi --with unidic-lite --with openai-whisper \
+  --with pyyaml --with numpy --with scipy --with librosa --with soundfile \
+  python3 pipeline/run.py <素材.mp4> --out <出力先> --style kirinuki
+```
+
+### 任意の編集スタイルへ増やす
+
+15プリセットが上限ではありません。参考動画URLまたは動画ファイルを受け取ったら、
+`style-learning/` の取得→タイル絵コンテ/scene/音響/配色分析→YAML登録→lint→
+25秒テストレンダ→被りQC→6点以上の目視確認を通して新規スタイルとして追加します。
+「全ジャンル共通の万能プリセット」に潰さず、見た目・カット律・無音方針・音響・
+テロップ文法が異なるものは独立したstyle/variantとして保持します。
+
+APIは編集開始の必須条件ではありません。最大品質または公開運用では次を任意で使います。
+
+| 用途 | API/認証 | 必須性 |
+|---|---|---|
+| 日本語字幕の精度・固有名詞補正 | `OPENAI_API_KEY`（音声文字起こし） | 任意。無ければローカルWhisper |
+| YouTubeへの下書き登録・公開 | YouTube Data API OAuth | 公開連携時のみ。公開は人間承認後 |
+| 生成B-roll/特殊モーション | Higgsfield等の動画生成 | 素材で作れない演出だけ。クレジット消費前に承認 |
+| BGM/SE | 契約済み音源サービスまたはライセンス明確な音源 | 音源方針が決まるまで無断取得しない |
+
 **主なオプション**（2026-08-02 時点）
 
 | | |

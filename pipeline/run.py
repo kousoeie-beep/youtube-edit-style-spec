@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """素材1本 → 公開できる動画一式。
 
-  uv run --with pillow --with fugashi --with unidic-lite --with mlx-whisper \
+  macOS: uv run --with pillow --with fugashi --with unidic-lite --with mlx-whisper \
+     python3 run.py <素材> [--out DIR]
+  Linux: uv run --with pillow --with fugashi --with unidic-lite --with openai-whisper \
      python3 run.py <素材> [--out DIR]
 
 2026-08-01 に実素材で確立した工程を1コマンドにまとめたもの。
@@ -14,6 +16,55 @@ def log(m): print(f"[{time.time()-T0:6.1f}s] {m}", flush=True)
 def sh(cmd, **kw):
     r = subprocess.run(cmd, shell=isinstance(cmd, str), capture_output=True, text=True, **kw)
     return r
+
+def select_video_encoder(encoders, platform_name=None):
+    """Return a usable H.264 encoder without assuming the host is macOS."""
+    platform_name = platform_name or sys.platform
+    names = {line.split()[1] for line in encoders.splitlines() if len(line.split()) > 1}
+    if platform_name == "darwin" and "h264_videotoolbox" in names:
+        return "h264_videotoolbox"
+    if "libx264" in names:
+        return "libx264"
+    raise RuntimeError("No supported H.264 encoder found (need h264_videotoolbox or libx264)")
+
+def select_asr_backend(platform_name=None):
+    """Choose Metal MLX on macOS and portable openai-whisper elsewhere."""
+    forced = os.environ.get("YOUTUBE_EDIT_ASR_BACKEND")
+    if forced:
+        if forced not in {"mlx", "whisper"}:
+            raise ValueError("YOUTUBE_EDIT_ASR_BACKEND must be 'mlx' or 'whisper'")
+        return forced
+    return "mlx" if (platform_name or sys.platform) == "darwin" else "whisper"
+
+def find_japanese_font(candidates=None):
+    candidates = candidates or (
+        os.path.expanduser("~/Library/Fonts/NotoSansJP-Bold.ttf"),
+        "/Library/Fonts/NotoSansJP-Bold.ttf",
+        "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
+        os.path.expanduser("~/.local/share/fonts/NotoSansCJK-Bold.ttc"),
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+        "/usr/share/fonts/truetype/noto/NotoSansJP-Bold.ttf",
+    )
+    return next((path for path in candidates if os.path.exists(path)), None)
+
+_WHISPER_MODEL = None
+
+def local_transcribe(path):
+    backend = select_asr_backend()
+    if backend == "mlx":
+        import mlx_whisper
+        return mlx_whisper.transcribe(
+            path,
+            path_or_hf_repo="mlx-community/whisper-large-v3-turbo",
+            language="ja", word_timestamps=True, verbose=False,
+        )
+    import whisper
+    global _WHISPER_MODEL
+    if _WHISPER_MODEL is None:
+        _WHISPER_MODEL = whisper.load_model(os.environ.get("YOUTUBE_EDIT_WHISPER_MODEL", "turbo"))
+    return _WHISPER_MODEL.transcribe(
+        path, language="ja", word_timestamps=True, verbose=False
+    )
 
 # ── 0. プリフライト（環境・回転・音量）
 def preflight(src):
@@ -34,10 +85,11 @@ def preflight(src):
     filters = sh(["ffmpeg","-hide_banner","-filters"]).stdout
     has = lambda n: any(len(l.split())>1 and l.split()[1]==n for l in filters.splitlines())
     enc = sh(["ffmpeg","-hide_banner","-encoders"]).stdout
+    encoder = select_video_encoder(enc)
     return {"W":W,"H":H,"rot":rot,"dur":dur,"I":I,"created":_creation_time(src),
             "src":src,                     # 画面占有率の測定に使う。
             "portrait":H>W, "drawtext":has("drawtext"),
-            "hwenc":"h264_videotoolbox" in enc}
+            "video_encoder":encoder, "hwenc":encoder == "h264_videotoolbox"}
 
 # ── 1. 音声抽出＋強調
 def audio(src, wd):
@@ -93,14 +145,11 @@ def _api_transcribe(wav, model, want_words=False, keywords=None):
         return None
 
 def asr(wd):
-    import mlx_whisper
     out = {}
     for tag, f in (("enh", "a_enh.wav"), ("raw", "a16k.wav")):
         p = f"{wd}/asr_{tag}.json"
         if not os.path.exists(p):
-            r = mlx_whisper.transcribe(f"{wd}/{f}",
-                    path_or_hf_repo="mlx-community/whisper-large-v3-turbo",
-                    language="ja", word_timestamps=True, verbose=False)
+            r = local_transcribe(f"{wd}/{f}")
             json.dump(r, open(p,"w"), ensure_ascii=False)
         out[tag] = json.load(open(p))
         log(f"  ASR[{tag}] {len(out[tag]['segments'])}セグ（ローカル）")
@@ -782,13 +831,9 @@ def capseq(caps, env, wd, style_id=None, spk_ok=False, logo=None, broll=None,
            headlines=None, cuts_=None, topic=True):
     from PIL import Image, ImageDraw, ImageFont
     W,H,FPS = env["W"], env["H"], 30
-    fp = next((q for q in (
-        os.path.expanduser("~/Library/Fonts/NotoSansJP-Bold.ttf"),
-        "/Library/Fonts/NotoSansJP-Bold.ttf",
-        "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
-    ) if os.path.exists(q)), None)
+    fp = find_japanese_font()
     if not fp:
-        sys.exit("NotoSansJP-Bold.ttf が見つからない。~/Library/Fonts/ に入れてください")
+        sys.exit("Noto Sans JP/CJK Bold が見つからない。ユーザーまたはシステムのfontディレクトリに入れてください")
 
     # ── スタイル定義を使う経路。失敗したら既定レイアウトに落ちる（無音で落ちない）
     plan = None; bar = []; badge = None; shapes = []; pics = []
