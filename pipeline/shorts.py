@@ -25,12 +25,17 @@ import run as R  # noqa: E402
 
 def cut_segments(src, segs, out, wd):
     """区間を切り出して繋ぐ。再エンコードする（コピーだとGOP境界でずれる）。"""
+    encoders = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-encoders"], capture_output=True, text=True, check=True
+    ).stdout
+    encoder = R.select_video_encoder(encoders)
+    video_args = (["-c:v", encoder, "-b:v", "12M"] if encoder == "h264_videotoolbox"
+                  else ["-c:v", encoder, "-preset", "medium", "-crf", "20"])
     parts = []
     for i, (a, b) in enumerate(segs):
         p = os.path.join(wd, f"_seg{i:02d}.mp4")
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(a),
-                        "-to", str(b), "-i", src,
-                        "-c:v", "h264_videotoolbox", "-b:v", "12M",
+                        "-to", str(b), "-i", src, *video_args,
                         "-c:a", "aac", "-b:a", "192k", p], check=True)
         parts.append(p)
     # concat はリストファイルの**あるディレクトリからの相対**でパスを解決する。
